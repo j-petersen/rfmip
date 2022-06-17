@@ -1,0 +1,6 @@
+{
+ "name": "test",
+ "description": "Ein Test",
+ "n_batch": 100,
+ "savename": "/Users/jpetersen/rare/rfmip/experiment_setups/test.json"
+}
