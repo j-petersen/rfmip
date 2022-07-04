@@ -28,6 +28,7 @@ def main() -> None:
     write_xml(data.surface_albedo.values, "surface_albedo.xml")
     write_xml(data.profile_weight.values, "profil_weight.xml")
     write_xml(data.surface_temperature.values, "surface_temperature.xml")
+    write_xml(data.pres_layer.values, 'pressure_layer.xml')
     field_names = ["T", "z"]
     spec_dict = species_name_mapping()
     spec_values = [spec_dict[key] for key in spec_dict if spec_dict[key] is not None]
@@ -35,6 +36,7 @@ def main() -> None:
     field_names += spec_values
 
     arr_gf4 = pyarts.arts.ArrayOfGriddedField4()
+    surface_elevation_arr = np.zeros(data.dims['site'])
     for site in range(data.dims["site"]):
         arr = np.zeros(
             (len(field_names), len(data.isel(site=0).pres_layer.values), 1, 1)
@@ -49,6 +51,7 @@ def main() -> None:
         z_elevation = get_elevation(
             [[data.isel(site=site).lat.values, data.isel(site=site).lon.values]]
         )
+        surface_elevation_arr[site] = z_elevation
 
         arr[1, :, 0, 0] = z_above_ground + z_elevation
 
@@ -80,6 +83,7 @@ def main() -> None:
         )
         arr_gf4.append(gf4)
 
+    write_xml(surface_elevation_arr, "surface_altitudes.xml")
     write_xml(arr_gf4, "atm_fields.xml")
 
 
