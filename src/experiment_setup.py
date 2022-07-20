@@ -12,11 +12,10 @@ class ExperimentSetup:
     f_grid: dict
     lam_grid: dict
     rfmip_path: str
+    input_path: str
     artscat_path: str
     artsxml_path: str
-    sensor_pos: dict
-    sun_pos: dict
-    sun_type: str
+    solar_type: str
     angular_grid: dict
     gas_scattering_do: bool
     savename: str = '' #dataclasses.field(init=False)
@@ -53,19 +52,17 @@ def exp_setup_description():
     dis = ExperimentSetup('description',
         description='This is the discription of the Experiment Setup class variables.',
         rfmip_path='path to the rfmip directory.',
+        input_path='path to the input data for the run',
         artscat_path='Path to the arts cat data.',
         artsxml_path='Path to the arts xml data.',
         which_grid='give the unit for the f_grid. Options are frequency or wavelength',
         f_grid={'min_f': 'lower frequency', 'max_f': 'upper frequency', 'nf': 'number of frequencies'},
         lam_grid={'min_lam': 'lower wavelength in nm', 'max_lam': 'upper wavelength in nm', 'nlam': 'number of wavelengths'},
-        sensor_pos={'alt': 'altitude', 'lat': 'latitude', 'lon': 'longitude'},
-        sun_pos={'lat': 'latitude of zenith position', 'lon': 'longitude of zenith position'},
-        sun_type='Chose the type of the sun. Options are: None, BlackBody, Spectrum, White',
+        solar_type='Chose the type of the sun. Options are: None, BlackBody, Spectrum, White',
         angular_grid={'N_za_grid': 'Number of zenith angles: recommended 20', 'N_aa_grid': 'Number of azimuth angles: recommended 41', 'za_grid_type': 'Zenith angle grid type: linear, linear_mu or double_gauss'},
         gas_scattering_do='inculde gas scattering.'
     )
     dis.save()
-    print(dis)
     
 
 def new_test_setup():
@@ -73,14 +70,13 @@ def new_test_setup():
         name='test',
         description='this is a test ',
         rfmip_path='/Users/jpetersen/rare/rfmip/',
+        input_path='/Users/jpetersen/rare/rfmip/input/rfmip/',
         artscat_path='/Users/jpetersen/rare/arts-cat-data/',
         artsxml_path='/Users/jpetersen/rare/arts-xml-data/',
         which_grid='wavelength',
         f_grid={'min_f': 1e14, 'max_f': 1e15, 'nf': 3},
         lam_grid={'min_lam': 380, 'max_lam': 780, 'nlam': 12},
-        sensor_pos={'alt': 0, 'lat': 0, 'lon': 0},
-        sun_pos={'lat': 0, 'lon': 0},
-        sun_type='BlackBody',
+        solar_type='BlackBody',
         angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'},
         gas_scattering_do=1
     )
@@ -92,21 +88,40 @@ def olr_setup():
         name='olr',
         description='goal is to reproduce a olr plot',
         rfmip_path='/Users/jpetersen/rare/rfmip/',
+        input_path='/Users/jpetersen/rare/rfmip/input/rfmip',
         artscat_path='/Users/jpetersen/rare/arts-cat-data/',
         artsxml_path='/Users/jpetersen/rare/arts-xml-data/',
         which_grid='frequency',
         f_grid={'min_f': 90e12, 'max_f': 30e9, 'nf': 1_000},
         lam_grid={'min_lam': None, 'max_lam': None, 'nlam': None},
-        sensor_pos={'alt': 100_000, 'lat': 0, 'lon': 0},
-        sun_pos={'lat': 0, 'lon': 0},
-        sun_type='None',
+        solar_type='None',
         angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'},
         gas_scattering_do=0
     )
+    exp.save()
+
+def solar_angle_dependency_setup():
+    exp = ExperimentSetup(
+        name='solar_angle',
+        description='Test to investigate the dependency of the solar angle',
+        rfmip_path='/Users/jpetersen/rare/rfmip/',
+        input_path='solar_angle/',
+        artscat_path='/Users/jpetersen/rare/arts-cat-data/',
+        artsxml_path='/Users/jpetersen/rare/arts-xml-data/',
+        which_grid='frequency',
+        f_grid={'min_f': 90e12, 'max_f': 30e9, 'nf': 1_000},
+        lam_grid={'min_lam': None, 'max_lam': None, 'nlam': None},
+        solar_type='BlackBody',
+        angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'},
+        gas_scattering_do=1
+    )
+    exp.save()
 
 def main():
     new_test_setup()
     exp_setup_description()
+    olr_setup()
+    solar_angle_dependency_setup()
 
 
 if __name__ == '__main__':
