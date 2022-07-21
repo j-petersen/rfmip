@@ -16,10 +16,14 @@ def run_arts_batch(exp_setup, verbosity=2):
 
     ws.NumericCreate('z0')
     ws.NumericCreate('surface_reflectivity_numeric')
+    ws.NumericCreate('solar_zenith_angle')
 
     ws.VectorCreate('surface_temperatures')
     ws.VectorCreate('surface_reflectivities')
     ws.VectorCreate('surface_altitudes')
+    ws.VectorCreate('solar_zenith_angles')
+
+    ws.StringCreate('solar_type')
 
     ## Set Agendas 
     # Agenda for scalar gas absorption calculation
@@ -67,21 +71,22 @@ def run_arts_batch(exp_setup, verbosity=2):
         print('Use a valid option fo which grid to use. Option are wavelength or frequency')
 
     # set geographical position
-    ws.lat_true=[exp_setup.sensor_pos['lat']]
-    ws.lon_true=[exp_setup.sensor_pos['lon']]
+    # always at 0/0 because the atm is 1D anyways but the sun zenioth angle varies
+    ws.lat_true = [0.0]
+    ws.lon_true = [0.0]
 
     # No sensor properties
     ws.sensorOff()
     
     # Definition of sensor position and line of sight (LOS)
-    ws.sensor_pos = [[exp_setup.sensor_pos['alt']]]
+    ws.sensor_pos = [[0.0]] # flux are calculated at every ppath point
     ws.sensor_los = [[0]] # irrelevant for fluxes
 
     ## Atmosphere
     ws.AtmosphereSet1D()
     ws.ArrayOfVectorCreate('p_grids')
-    ws.p_grids = pyarts.xml.load(f'{exp_setup.rfmip_path}input/pressure_layer.xml')
-    ws.batch_atm_fields_compact = pyarts.xml.load(f'{exp_setup.rfmip_path}input/atm_fields.xml')
+    ws.p_grids = pyarts.xml.load(f'{exp_setup.input_path}pressure_layer.xml')
+    ws.batch_atm_fields_compact = pyarts.xml.load(f'{exp_setup.input_path}atm_fields.xml')
 
 
     # species = pyarts.xml.load(f'{exp_setup.rfmip_path}input/species.xml')
@@ -114,16 +119,19 @@ def run_arts_batch(exp_setup, verbosity=2):
     # Set surface relectivity
 
 
-    ws.surface_temperatures = pyarts.xml.load(f'{exp_setup.rfmip_path}input/surface_temperature.xml')
-    ws.surface_reflectivities = pyarts.xml.load(f'{exp_setup.rfmip_path}input/surface_albedo.xml')
-    ws.surface_altitudes = pyarts.xml.load(f'{exp_setup.rfmip_path}input/surface_altitudes.xml')
+    ws.surface_temperatures = pyarts.xml.load(f'{exp_setup.input_path}surface_temperature.xml')
+    ws.surface_reflectivities = pyarts.xml.load(f'{exp_setup.input_path}surface_albedo.xml')
+    ws.surface_altitudes = pyarts.xml.load(f'{exp_setup.input_path}surface_altitudes.xml')
+    ws.solar_zenith_angles = pyarts.xml.load(f'{exp_setup.input_path}solar_zenith_angle.xml')
+    ws.solar_type = exp_setup.solar_type
     
   
     #Switch on gas scattering
     ws.gas_scattering_do = exp_setup.gas_scattering_do
 
     # add star
-    ws, _ = solar_spectrum(ws, sun_pos=[exp_setup.sun_pos['lat'], exp_setup.sun_pos['lon']], star_type='BlackBody')
+    # happens in the batch agenda
+    # ws, _ = solar_spectrum(ws, sun_pos=[exp_setup.sun_pos['lat'], exp_setup.sun_pos['lon']], star_type='BlackBody')
 
     # set angular grid
     ws.AngularGridsSetFluxCalc(N_za_grid=exp_setup.angular_grid['N_za_grid'], N_aa_grid=exp_setup.angular_grid['N_aa_grid'], za_grid_type=exp_setup.angular_grid['za_grid_type'])
@@ -165,6 +173,10 @@ def dobatch_calc_agenda__disort(ws):
     ws.VectorSetConstant(ws.surface_scalar_reflectivity, 1, ws.surface_reflectivity_numeric)
     ws.Extract(ws.z0, ws.surface_altitudes, ws.ybatch_index)
     ws.MatrixSetConstant(ws.z_surface, 1, 1, ws.z0)
+    ws.Extract(ws.solar_zenith_angle, ws.solar_zenith_angles, ws.ybatch_index)
+
+    # ToDo: add startype
+    ws, _ = solar_spectrum(ws, solar_zenith_angle=ws.solar_zenith_angle.value, star_type=ws.solar_type.value)
 
     # recalcs the atmosphere
     ws.AtmFieldsAndParticleBulkPropFieldFromCompact()
@@ -264,28 +276,27 @@ def replace_item_in_list(item_list, old_val, new_val):
 def replace_values(list_to_replace, item_to_replace, item_to_replace_with):
     return [item_to_replace_with if item == item_to_replace else item for item in list_to_replace]
 
-def solar_spectrum(ws, sun_pos=np.array([0., 0.,]), star_type=None):
+def solar_spectrum(ws, solar_zenith_angle=0.0, star_type=None):
     ## set star
-    # Switch on/off star
     ws.Touch(ws.stars)
     
     if star_type==None:
         ws.star_do = 0
     elif star_type=='BlackBody':
         ws.starBlackbodySimple(distance=1.5e11,
-        						latitude=sun_pos[0],
-                                longitude=sun_pos[1])
+        						latitude=0,
+                                longitude=solar_zenith_angle)
     elif star_type=='Spectrum':
         gf2 = pyarts.xml.load(f"{exp_setup.artsxml_path}star/Sun/solar_spectrum.xml")
         ws.star_spectrum_raw = gf2
         ws.starFromGrid(temperature=0,
                         distance=1.5e11,
-                        latitude=sun_pos[0],
-                        longitude=sun_pos[1])
+                        latitude=0,
+                        longitude=solar_zenith_angle)
     elif star_type=='White': # white in frequency
         ws.starBlackbodySimple(distance=1.5e11,
-        						latitude=sun_pos[0],
-                                longitude=sun_pos[1])
+        						latitude=0,
+                                longitude=solar_zenith_angle)
         ws.stars.value[0].spectrum[:,0] = np.ones(np.shape(ws.stars.value[0].spectrum[:,0])) * np.max(ws.stars.value[0].spectrum)
 
     star_spectrum = np.array(ws.stars.value[0].spectrum)[:,0].copy()
