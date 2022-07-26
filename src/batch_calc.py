@@ -23,8 +23,6 @@ def run_arts_batch(exp_setup, verbosity=2):
     ws.VectorCreate('surface_altitudes')
     ws.VectorCreate('solar_zenith_angles')
 
-    ws.StringCreate('solar_type')
-
     ## Set Agendas 
     # Agenda for scalar gas absorption calculation
     ws.Copy(ws.abs_xsec_agenda, ws.abs_xsec_agenda__noCIA)
@@ -43,8 +41,6 @@ def run_arts_batch(exp_setup, verbosity=2):
     # Geometric Ppath (no refraction)
     ws.Copy(ws.ppath_step_agenda, ws.ppath_step_agenda__GeometricPath)
 
-    ws.gas_scattering_agenda = gas_scattering_agenda
-
     ws.iy_surface_agenda = iy_surface_agenda # egal für disort?
 
 
@@ -62,13 +58,16 @@ def run_arts_batch(exp_setup, verbosity=2):
     ws.cloudboxOff()
 
     # Frequency grid
-    if exp_setup.which_grid == 'wavelength':
-        lam_grid = np.linspace(exp_setup.lam_grid['min_lam'], exp_setup.lam_grid['max_lam'], exp_setup.lam_grid['nlam'], endpoint=True)*1e-9
+    if exp_setup.which_spectral_grid == 'frequency':  
+        ws.f_grid = np.linspace(exp_setup.spectral_grid['min'], exp_setup.spectral_grid['max'], exp_setup.spectral_grid['n'], endpoint=True)
+    elif exp_setup.which_spectral_grid == 'wavelength':
+        lam_grid = np.linspace(exp_setup.spectral_grid['min'], exp_setup.spectral_grid['max'], exp_setup.spectral_grid['n'], endpoint=True)*1e-9
         ws.f_grid = ty.physics.wavelength2frequency(lam_grid)[::-1]
-    elif exp_setup.which_grid == 'frequency':  
-        ws.f_grid = np.linspace(exp_setup.f_grid['min_f'], exp_setup.f_grid['max_f'], exp_setup.f_grid['nf'], endpoint=True)
+    elif exp_setup.which_spectral_grid == 'kayser':
+        kayser_grid = np.linspace(exp_setup.spectral_grid['min'], exp_setup.spectral_grid['max'], exp_setup.spectral_grid['n'], endpoint=True)
+        ws.f_grid = ty.physics.wavenumber2frequency(kayser_grid)
     else:
-        print('Use a valid option fo which grid to use. Option are wavelength or frequency')
+        print('Use a valid option fo which grid to use. Option are frequency, wavelength or kayser.')
 
     # set geographical position
     # always at 0/0 because the atm is 1D anyways but the sun zenioth angle varies
@@ -124,15 +123,11 @@ def run_arts_batch(exp_setup, verbosity=2):
     ws.surface_altitudes = pyarts.xml.load(f'{exp_setup.input_path}surface_altitudes.xml')
     # ws.solar_zenith_angles = pyarts.xml.load(f'{exp_setup.input_path}solar_zenith_angle.xml')
     ws.solar_zenith_angles = np.linspace(0, 180, 100, endpoint=True)
-    ws.solar_type = exp_setup.solar_type
     
-  
     #Switch on gas scattering
     ws.gas_scattering_do = exp_setup.gas_scattering_do
-
-    # add star
-    # happens in the batch agenda
-    # ws, _ = solar_spectrum(ws, sun_pos=[exp_setup.sun_pos['lat'], exp_setup.sun_pos['lon']], star_type='BlackBody')
+    if exp_setup.gas_scattering_do:
+            ws.gas_scattering_agenda = gas_scattering_agenda
 
     # set angular grid
     ws.AngularGridsSetFluxCalc(N_za_grid=exp_setup.angular_grid['N_za_grid'], N_aa_grid=exp_setup.angular_grid['N_aa_grid'], za_grid_type=exp_setup.angular_grid['za_grid_type'])
@@ -147,7 +142,12 @@ def run_arts_batch(exp_setup, verbosity=2):
     ws.ybatch_start = 0
     ws.ybatch_n = 100
 
-    ws.dobatch_calc_agenda = dobatch_calc_agenda__disort
+    # change batchcalc agenda based on star type
+    if exp_setup.solar_type == 'BlackBody':
+        ws.dobatch_calc_agenda = dobatch_calc_agenda__disort_blackbody
+    else:
+        print('Not yet implimented!')
+
     with ty.utils.Timer():
         print('starting calculation')
         ws.DOBatchCalc()
@@ -161,7 +161,7 @@ def run_arts_batch(exp_setup, verbosity=2):
 
 
 @pyarts.workspace.arts_agenda(allow_callbacks=False)
-def dobatch_calc_agenda__disort(ws):
+def dobatch_calc_agenda__disort_blackbody(ws):
     # print batch
     ws.Print(ws.ybatch_index, 0)
 
@@ -176,8 +176,6 @@ def dobatch_calc_agenda__disort(ws):
     ws.MatrixSetConstant(ws.z_surface, 1, 1, ws.z0)
     ws.Extract(ws.solar_zenith_angle, ws.solar_zenith_angles, ws.ybatch_index)
 
-    # ToDo: add startype
-    # ws.NumericSet(ws.solar_zenith_angle, 45.)
     ws.starBlackbodySimple(distance=1.5e11, latitude=0, longitude=ws.solar_zenith_angle)
 
     # recalcs the atmosphere
@@ -306,7 +304,8 @@ def solar_spectrum(ws, solar_zenith_angle=0.0, star_type=None):
     return ws, star_spectrum
 
 def main():
-    exp = read_exp_setup(exp_name='test')
+    # exp = read_exp_setup(exp_name='test')
+    exp = read_exp_setup(exp_name='solar_angle')
     print(exp)
     run_arts_batch(exp)
 

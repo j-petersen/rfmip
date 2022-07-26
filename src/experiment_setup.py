@@ -8,9 +8,8 @@ class ExperimentSetup:
     name: str
     # _: dataclasses.KW_ONLY # enter data as kw atfer this
     description: str
-    which_grid: str
-    f_grid: dict
-    lam_grid: dict
+    which_spectral_grid: str
+    spectral_grid: dict
     rfmip_path: str
     input_path: str
     artscat_path: str
@@ -55,10 +54,9 @@ def exp_setup_description():
         input_path='path to the input data for the run',
         artscat_path='Path to the arts cat data.',
         artsxml_path='Path to the arts xml data.',
-        which_grid='give the unit for the f_grid. Options are frequency or wavelength',
-        f_grid={'min_f': 'lower frequency', 'max_f': 'upper frequency', 'nf': 'number of frequencies'},
-        lam_grid={'min_lam': 'lower wavelength in nm', 'max_lam': 'upper wavelength in nm', 'nlam': 'number of wavelengths'},
-        solar_type='Chose the type of the sun. Options are: None, BlackBody, Spectrum, White',
+        solar_type='Chose the type of the star. Options are: None, BlackBody, Spectrum, White',
+        which_spectral_grid='give the unit for the f_grid. Options are frequency, wavelength or kayser',
+        spectral_grid={'min': 'minimum of spectral grid', 'max': 'minimum of spectral grid', 'n': 'number of spectral grid points'},
         angular_grid={'N_za_grid': 'Number of zenith angles: recommended 20', 'N_aa_grid': 'Number of azimuth angles: recommended 41', 'za_grid_type': 'Zenith angle grid type: linear, linear_mu or double_gauss'},
         gas_scattering_do='inculde gas scattering.'
     )
@@ -68,15 +66,14 @@ def exp_setup_description():
 def new_test_setup():
     exp = ExperimentSetup(
         name='test',
-        description='this is a test ',
+        description='this is a test',
         rfmip_path='/Users/jpetersen/rare/rfmip/',
         input_path='/Users/jpetersen/rare/rfmip/input/rfmip/',
         artscat_path='/Users/jpetersen/rare/arts-cat-data/',
         artsxml_path='/Users/jpetersen/rare/arts-xml-data/',
-        which_grid='wavelength',
-        f_grid={'min_f': 1e14, 'max_f': 1e15, 'nf': 3},
-        lam_grid={'min_lam': 380, 'max_lam': 780, 'nlam': 12},
         solar_type='BlackBody',
+        which_spectral_grid='wavelength',
+        spectral_grid={'min': 380, 'max': 780, 'n': 12},
         angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'},
         gas_scattering_do=1
     )
@@ -91,10 +88,9 @@ def olr_setup():
         input_path='/Users/jpetersen/rare/rfmip/input/rfmip',
         artscat_path='/Users/jpetersen/rare/arts-cat-data/',
         artsxml_path='/Users/jpetersen/rare/arts-xml-data/',
-        which_grid='frequency',
-        f_grid={'min_f': 90e12, 'max_f': 30e9, 'nf': 1_000},
-        lam_grid={'min_lam': None, 'max_lam': None, 'nlam': None},
         solar_type='None',
+        which_spectral_grid='kayser',
+        spectral_grid={'min': 1, 'max': 2500, 'n': 100},
         angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'},
         gas_scattering_do=0
     )
@@ -105,13 +101,12 @@ def solar_angle_dependency_setup():
         name='solar_angle',
         description='Test to investigate the dependency of the solar angle',
         rfmip_path='/Users/jpetersen/rare/rfmip/',
-        input_path='solar_angle/',
+        input_path='/Users/jpetersen/rare/rfmip/solar_angle/',
         artscat_path='/Users/jpetersen/rare/arts-cat-data/',
         artsxml_path='/Users/jpetersen/rare/arts-xml-data/',
-        which_grid='frequency',
-        f_grid={'min_f': 90e12, 'max_f': 30e9, 'nf': 1_000},
-        lam_grid={'min_lam': None, 'max_lam': None, 'nlam': None},
         solar_type='BlackBody',
+        which_spectral_grid='wavelength',
+        spectral_grid={'min': 380, 'max': 780, 'n': 12},
         angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'},
         gas_scattering_do=1
     )
