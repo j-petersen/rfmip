@@ -1,3 +1,4 @@
+# %%
 import os
 import pyarts
 import numpy as np
@@ -26,13 +27,32 @@ def plot_irradiance(irrad, lam_grid, exp_setup) -> None:
 
 def main() -> None:
     exp_setup = read_exp_setup(exp_name='test')
-    data = pyarts.xml.load(f'{exp_setup.rfmip_path}output/{exp_setup.name}/combined_spectral_irradiance.xml') # wavelength, pressure, down-/upward
-    lam_grid = np.linspace(exp_setup.lam_grid['min_lam'], exp_setup.lam_grid['max_lam'], exp_setup.lam_grid['nlam'], endpoint=True)*1e-9
-    f_grid = ty.physics.wavelength2frequency(lam_grid)
-    irrad_diffuse_lam, lam_grid = ty.physics.perfrequency2perwavelength(data, f_grid)
-    irrad_diffuse_nm = irrad_diffuse_lam*1e-9
-    lam_grid_nm = lam_grid*1e9
-    plot_irradiance(irrad_diffuse_nm, lam_grid_nm, exp_setup=exp_setup)
+    data = pyarts.xml.load(
+        f'{exp_setup.rfmip_path}output/{exp_setup.name}/combined_spectral_irradiance.xml') # wavelength, pressure, down-/upward
+    spectral_grid = np.linspace(
+        exp_setup.spectral_grid['min'], exp_setup.spectral_grid['max'], 
+        exp_setup.spectral_grid['n'], endpoint=True)
+    
+    if exp_setup.which_spectral_grid == 'wavelength':
+        f_grid = ty.physics.wavelength2frequency(spectral_grid*1e-9)[::-1]
+        irrad_diffuse, spectral_grid = ty.physics.perfrequency2perwavelength(data, f_grid)
+        irrad_diffuse_nm = irrad_diffuse*1e-9
+        spectral_grid_nm = spectral_grid*1e9
+        
+        plot_irradiance(irrad_diffuse_nm, spectral_grid_nm, exp_setup=exp_setup)
+
+    elif exp_setup.which_spectral_grid == 'frequency':
+        plot_irradiance(data, spectral_grid, exp_setup=exp_setup)
+
+    elif exp_setup.which_spectral_grid == 'kayser':
+        f_grid = ty.physics.wavenumber2frequency(spectral_grid*1e2)
+        irrad_diffuse, spectral_grid = ty.physics.perfrequency2perwavenumber(data, f_grid)
+        irrad_diffuse_cm = irrad_diffuse*1e2
+        spectral_grid_cm = spectral_grid*1e-2
+        
+        plot_irradiance(irrad_diffuse_cm, spectral_grid_cm, exp_setup=exp_setup)
+
 
 if __name__ == '__main__':
     main()
+# %%
