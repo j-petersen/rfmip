@@ -122,7 +122,8 @@ def run_arts_batch(exp_setup, verbosity=2):
     ws.surface_temperatures = pyarts.xml.load(f'{exp_setup.input_path}surface_temperature.xml')
     ws.surface_reflectivities = pyarts.xml.load(f'{exp_setup.input_path}surface_albedo.xml')
     ws.surface_altitudes = pyarts.xml.load(f'{exp_setup.input_path}surface_altitudes.xml')
-    ws.solar_zenith_angles = pyarts.xml.load(f'{exp_setup.input_path}solar_zenith_angle.xml')
+    # ws.solar_zenith_angles = pyarts.xml.load(f'{exp_setup.input_path}solar_zenith_angle.xml')
+    ws.solar_zenith_angles = np.linspace(0, 180, 100, endpoint=True)
     ws.solar_type = exp_setup.solar_type
     
   
@@ -159,7 +160,7 @@ def run_arts_batch(exp_setup, verbosity=2):
     ws.WriteXML('binary', ws.dobatch_spectral_irradiance_field, f'{exp_setup.rfmip_path}output/{exp_setup.name}/spectral_irradiance.xml')
 
 
-@pyarts.workspace.arts_agenda(allow_callbacks=True)
+@pyarts.workspace.arts_agenda(allow_callbacks=False)
 def dobatch_calc_agenda__disort(ws):
     # print batch
     ws.Print(ws.ybatch_index, 0)
@@ -176,7 +177,8 @@ def dobatch_calc_agenda__disort(ws):
     ws.Extract(ws.solar_zenith_angle, ws.solar_zenith_angles, ws.ybatch_index)
 
     # ToDo: add startype
-    ws, _ = solar_spectrum(ws, solar_zenith_angle=ws.solar_zenith_angle.value, star_type=ws.solar_type.value)
+    # ws.NumericSet(ws.solar_zenith_angle, 45.)
+    ws.starBlackbodySimple(distance=1.5e11, latitude=0, longitude=ws.solar_zenith_angle)
 
     # recalcs the atmosphere
     ws.AtmFieldsAndParticleBulkPropFieldFromCompact()
