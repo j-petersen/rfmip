@@ -5,7 +5,7 @@ import typhon as ty
 import matplotlib.pyplot as plt
 
 from experiment_setup import read_exp_setup
-import helping_funcs as hf
+import helping_functions as hf
 
 def plot_irradiance(irrad, lam_grid, exp_setup) -> None:
     ty.plots.styles.use(["typhon", "typhon-dark"])
