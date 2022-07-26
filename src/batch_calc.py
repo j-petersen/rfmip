@@ -58,13 +58,16 @@ def run_arts_batch(exp_setup, verbosity=2):
     ws.cloudboxOff()
 
     # Frequency grid
-    if exp_setup.which_grid == 'wavelength':
-        lam_grid = np.linspace(exp_setup.lam_grid['min_lam'], exp_setup.lam_grid['max_lam'], exp_setup.lam_grid['nlam'], endpoint=True)*1e-9
+    if exp_setup.which_spectral_grid == 'frequency':  
+        ws.f_grid = np.linspace(exp_setup.spectral_grid['min'], exp_setup.spectral_grid['max'], exp_setup.spectral_grid['n'], endpoint=True)
+    elif exp_setup.which_spectral_grid == 'wavelength':
+        lam_grid = np.linspace(exp_setup.spectral_grid['min'], exp_setup.spectral_grid['max'], exp_setup.spectral_grid['n'], endpoint=True)*1e-9
         ws.f_grid = ty.physics.wavelength2frequency(lam_grid)[::-1]
-    elif exp_setup.which_grid == 'frequency':  
-        ws.f_grid = np.linspace(exp_setup.f_grid['min_f'], exp_setup.f_grid['max_f'], exp_setup.f_grid['nf'], endpoint=True)
+    elif exp_setup.which_spectral_grid == 'kayser':
+        kayser_grid = np.linspace(exp_setup.spectral_grid['min'], exp_setup.spectral_grid['max'], exp_setup.spectral_grid['n'], endpoint=True)
+        ws.f_grid = ty.physics.wavenumber2frequency(kayser_grid)
     else:
-        print('Use a valid option fo which grid to use. Option are wavelength or frequency')
+        print('Use a valid option fo which grid to use. Option are frequency, wavelength or kayser.')
 
     # set geographical position
     ws.lat_true=[exp_setup.sensor_pos['lat']]

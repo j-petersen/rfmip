@@ -8,9 +8,8 @@ class ExperimentSetup:
     name: str
     # _: dataclasses.KW_ONLY # enter data as kw atfer this
     description: str
-    which_grid: str
-    f_grid: dict
-    lam_grid: dict
+    which_spectral_grid: str
+    spectral_grid: dict
     rfmip_path: str
     artscat_path: str
     artsxml_path: str
@@ -55,9 +54,8 @@ def exp_setup_description():
         rfmip_path='path to the rfmip directory.',
         artscat_path='Path to the arts cat data.',
         artsxml_path='Path to the arts xml data.',
-        which_grid='give the unit for the f_grid. Options are frequency or wavelength',
-        f_grid={'min_f': 'lower frequency', 'max_f': 'upper frequency', 'nf': 'number of frequencies'},
-        lam_grid={'min_lam': 'lower wavelength in nm', 'max_lam': 'upper wavelength in nm', 'nlam': 'number of wavelengths'},
+        which_spectral_grid='give the unit for the f_grid. Options are frequency, wavelength or kayser',
+        spectral_grid={'min': 'minimum of spectral grid', 'max': 'minimum of spectral grid', 'n': 'number of spectral grid points'},
         sensor_pos={'alt': 'altitude', 'lat': 'latitude', 'lon': 'longitude'},
         sun_pos={'lat': 'latitude of zenith position', 'lon': 'longitude of zenith position'},
         sun_type='Chose the type of the sun. Options are: None, BlackBody, Spectrum, White',
@@ -71,13 +69,12 @@ def exp_setup_description():
 def new_test_setup():
     exp = ExperimentSetup(
         name='test',
-        description='this is a test ',
+        description='this is a test',
         rfmip_path='/Users/jpetersen/rare/rfmip/',
         artscat_path='/Users/jpetersen/rare/arts-cat-data/',
         artsxml_path='/Users/jpetersen/rare/arts-xml-data/',
-        which_grid='wavelength',
-        f_grid={'min_f': 1e14, 'max_f': 1e15, 'nf': 3},
-        lam_grid={'min_lam': 380, 'max_lam': 780, 'nlam': 12},
+        which_spectral_grid='wavelength',
+        spectral_grid={'min': 380, 'max': 780, 'n': 12},
         sensor_pos={'alt': 0, 'lat': 0, 'lon': 0},
         sun_pos={'lat': 0, 'lon': 0},
         sun_type='BlackBody',
@@ -94,9 +91,8 @@ def olr_setup():
         rfmip_path='/Users/jpetersen/rare/rfmip/',
         artscat_path='/Users/jpetersen/rare/arts-cat-data/',
         artsxml_path='/Users/jpetersen/rare/arts-xml-data/',
-        which_grid='frequency',
-        f_grid={'min_f': 90e12, 'max_f': 30e9, 'nf': 1_000},
-        lam_grid={'min_lam': None, 'max_lam': None, 'nlam': None},
+        which_spectral_grid='kayser',
+        spectral_grid={'min': 1, 'max': 2500, 'n': 100},
         sensor_pos={'alt': 100_000, 'lat': 0, 'lon': 0},
         sun_pos={'lat': 0, 'lon': 0},
         sun_type='None',
