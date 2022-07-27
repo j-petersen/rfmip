@@ -10,18 +10,16 @@ class ExperimentSetup:
     description: str
     which_spectral_grid: str
     spectral_grid: dict
+    species: list
     rfmip_path: str
-    artscat_path: str
-    artsxml_path: str
-    sensor_pos: dict
-    sun_pos: dict
-    sun_type: str
+    input_folder: str
+    arts_data_path: str
+    solar_type: str
     angular_grid: dict
-    gas_scattering_do: bool
     savename: str = '' #dataclasses.field(init=False)
 
     def __post_init__(self):
-        self.savename = f'/Users/jpetersen/rare/rfmip/experiment_setups/{self.name}.json'
+        self.savename = f'{self.rfmip_path}experiment_setups/{self.name}.json'
 
     def __repr__(self):
         out_str = 'ExperimentSetup:\n'
@@ -41,8 +39,8 @@ class EnhancedJSONEncoder(json.JSONEncoder):
             return super().default(o)
 
 
-def read_exp_setup(exp_name) -> dataclasses.dataclass:
-    with open(f'/Users/jpetersen/rare/rfmip/experiment_setups/{exp_name}.json') as fp:
+def read_exp_setup(exp_name, path) -> dataclasses.dataclass:
+    with open(f'{path}{exp_name}.json') as fp:
         d = json.load(fp)
         exp = ExperimentSetup(**d)
     return exp
@@ -52,18 +50,15 @@ def exp_setup_description():
     dis = ExperimentSetup('description',
         description='This is the discription of the Experiment Setup class variables.',
         rfmip_path='path to the rfmip directory.',
-        artscat_path='Path to the arts cat data.',
-        artsxml_path='Path to the arts xml data.',
+        input_folder='relative path from the rfmip dir to the input data for the run.',
+        arts_data_path='Path to the directory where arts cat (arts-cat-data) and xml (arts-xml-data) data are.',
+        solar_type='Chose the type of the star. Options are: None, BlackBody, Spectrum, White',
         which_spectral_grid='give the unit for the f_grid. Options are frequency, wavelength or kayser',
         spectral_grid={'min': 'minimum of spectral grid', 'max': 'minimum of spectral grid', 'n': 'number of spectral grid points'},
-        sensor_pos={'alt': 'altitude', 'lat': 'latitude', 'lon': 'longitude'},
-        sun_pos={'lat': 'latitude of zenith position', 'lon': 'longitude of zenith position'},
-        sun_type='Chose the type of the sun. Options are: None, BlackBody, Spectrum, White',
-        angular_grid={'N_za_grid': 'Number of zenith angles: recommended 20', 'N_aa_grid': 'Number of azimuth angles: recommended 41', 'za_grid_type': 'Zenith angle grid type: linear, linear_mu or double_gauss'},
-        gas_scattering_do='inculde gas scattering.'
+        species=['select species used for calculation. Select ["all"] to use all species defined in rfmip.'],
+        angular_grid={'N_za_grid': 'Number of zenith angles: recommended 20', 'N_aa_grid': 'Number of azimuth angles: recommended 41', 'za_grid_type': 'Zenith angle grid type: linear, linear_mu or double_gauss'}
     )
     dis.save()
-    print(dis)
     
 
 def new_test_setup():
@@ -71,15 +66,13 @@ def new_test_setup():
         name='test',
         description='this is a test',
         rfmip_path='/Users/jpetersen/rare/rfmip/',
-        artscat_path='/Users/jpetersen/rare/arts-cat-data/',
-        artsxml_path='/Users/jpetersen/rare/arts-xml-data/',
+        input_folder='input/rfmip/',
+        arts_data_path='/Users/jpetersen/rare/',
+        solar_type='BlackBody',
         which_spectral_grid='wavelength',
         spectral_grid={'min': 380, 'max': 780, 'n': 12},
-        sensor_pos={'alt': 0, 'lat': 0, 'lon': 0},
-        sun_pos={'lat': 0, 'lon': 0},
-        sun_type='BlackBody',
-        angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'},
-        gas_scattering_do=1
+        species=['water_vapor', 'ozone', 'carbon_dioxide_GM', 'methane_GM', 'nitrous_oxide_GM'],
+        angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'}
     )
     exp.save()
 
@@ -89,20 +82,52 @@ def olr_setup():
         name='olr',
         description='goal is to reproduce a olr plot',
         rfmip_path='/Users/jpetersen/rare/rfmip/',
-        artscat_path='/Users/jpetersen/rare/arts-cat-data/',
-        artsxml_path='/Users/jpetersen/rare/arts-xml-data/',
+        input_folder='input/rfmip/',
+        arts_data_path='/Users/jpetersen/rare/',
+        solar_type='None',
         which_spectral_grid='kayser',
         spectral_grid={'min': 1, 'max': 2500, 'n': 100},
-        sensor_pos={'alt': 100_000, 'lat': 0, 'lon': 0},
-        sun_pos={'lat': 0, 'lon': 0},
-        sun_type='None',
-        angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'},
-        gas_scattering_do=0
+        species=['water_vapor', 'ozone', 'carbon_dioxide_GM', 'methane_GM', 'nitrous_oxide_GM'],
+        angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'}
     )
+    exp.save()
+
+def solar_angle_dependency_setup():
+    exp = ExperimentSetup(
+        name='solar_angle',
+        description='Test to investigate the dependency of the solar angle',
+        rfmip_path='/Users/jpetersen/rare/rfmip/',
+        input_folder='input/solar_angle/',
+        arts_data_path='/Users/jpetersen/rare/',
+        solar_type='BlackBody',
+        which_spectral_grid='wavelength',
+        spectral_grid={'min': 380, 'max': 780, 'n': 12},
+        species=['water_vapor', 'ozone', 'carbon_dioxide_GM', 'methane_GM', 'nitrous_oxide_GM'],
+        angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'}
+    )
+    exp.save()
+
+def rfmip_setup():
+    exp = ExperimentSetup(
+        name='rfmip',
+        description='rfmip',
+        rfmip_path='/Users/jpetersen/rare/rfmip/',
+        input_folder='input/rfmip/',
+        arts_data_path='/Users/jpetersen/rare/',
+        solar_type='Spectrum',
+        which_spectral_grid='wavelength',
+        spectral_grid={'min': 200, 'max': 2_500, 'n': 800},
+        species=['all'],
+        angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'}
+    )
+    exp.save()
 
 def main():
     new_test_setup()
-    exp_setup_description()
+    # exp_setup_description()
+    olr_setup()
+    solar_angle_dependency_setup()
+    rfmip_setup()
 
 
 if __name__ == '__main__':

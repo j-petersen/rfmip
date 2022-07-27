@@ -25,8 +25,7 @@ def plot_irradiance(irrad, lam_grid, exp_setup) -> None:
     fig.savefig(f'{exp_setup.rfmip_path}plots/{exp_setup.name}/diffuse_flux.png', dpi=200)
     plt.show()
 
-def main() -> None:
-    exp_setup = read_exp_setup(exp_name='test')
+def plot_flux_profiles(exp_setup) -> None:
     data = pyarts.xml.load(
         f'{exp_setup.rfmip_path}output/{exp_setup.name}/combined_spectral_irradiance.xml') # wavelength, pressure, down-/upward
     spectral_grid = np.linspace(
@@ -52,6 +51,10 @@ def main() -> None:
         
         plot_irradiance(irrad_diffuse_cm, spectral_grid_cm, exp_setup=exp_setup)
 
+
+def main():
+    exp_setup = read_exp_setup(exp_name='test', path='/Users/jpetersen/rare/rfmip/experiment_setups/')
+    plot_flux_profiles(exp_setup=exp_setup)
 
 if __name__ == '__main__':
     main()
