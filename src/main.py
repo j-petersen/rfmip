@@ -8,8 +8,9 @@ import data_visualisation as vis
 
 def main():
     # Write experiment setup
-    setup.new_test_setup()
-    exp_setup = setup.read_exp_setup(exp_name='test', path='/Users/jpetersen/rare/rfmip/experiment_setups/')
+    # setup.new_test_setup()
+    setup.solar_angle_dependency_setup()
+    exp_setup = setup.read_exp_setup(exp_name='solar_angle', path='/Users/jpetersen/rare/rfmip/experiment_setups/')
     
     # Create input data
     print('Create input data')

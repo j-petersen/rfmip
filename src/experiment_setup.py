@@ -99,7 +99,7 @@ def solar_angle_dependency_setup():
         rfmip_path='/Users/jpetersen/rare/rfmip/',
         input_folder='input/solar_angle/',
         arts_data_path='/Users/jpetersen/rare/',
-        solar_type='BlackBody',
+        solar_type='Spectrum',
         which_spectral_grid='wavelength',
         spectral_grid={'min': 380, 'max': 780, 'n': 12},
         species=['water_vapor', 'ozone', 'carbon_dioxide_GM', 'methane_GM', 'nitrous_oxide_GM'],
