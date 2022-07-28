@@ -1,43 +1,43 @@
+import os
 import pyarts
 import requests
 import numpy as np
 import typhon as ty
 import pandas as pd
+from urllib.request import urlretrieve
+
+from experiment_setup import read_exp_setup
 
 
-def readin_nc(filename, fields=None):
-    fh = ty.files.NetCDF4()
-    if fields is None:
-        return fh.read(filename)
-    return fh.read(filename, fields)
+def create_input_data(exp_setup) -> None:
+    if not os.path.exists(f'{exp_setup.rfmip_path}{exp_setup.input_folder}'):
+        os.mkdir(f'{exp_setup.rfmip_path}{exp_setup.input_folder}')
 
+    rfmip_data_name = "multiple_input4MIPs_radiation_RFMIP_UColorado-RFMIP-1-2_none.nc"
+    fetch_official_rfmip_data(exp_setup, rfmip_data_name)
+    filename = f"{exp_setup.rfmip_path}input/{rfmip_data_name}"
 
-def write_xml(data, filename) -> None:
-    path = "/Users/jpetersen/rare/rfmip/input/"
-    pyarts.xml.save(data, filename=path + filename, format="ascii")
-
-
-def main() -> None:
-    filename = "/Users/jpetersen/rare/rfmip/input/multiple_input4MIPs_radiation_RFMIP_UColorado-RFMIP-1-2_none.nc"
     data = readin_nc(filename)
     data = data.isel(expt=0)
+
     sensor_pos = np.stack((data.lat.values, data.lon.values), axis=-1)
-    write_xml(sensor_pos, "sensor_pos.xml")
-    write_xml(data.solar_zenith_angle.values, "solar_zenith_angle.xml")
-    write_xml(data.total_solar_irradiance.values, "total_solar_irradiance.xml")
-    write_xml(data.surface_albedo.values, "surface_albedo.xml")
-    write_xml(data.profile_weight.values, "profil_weight.xml")
-    write_xml(data.surface_temperature.values, "surface_temperature.xml")
-    write_xml(data.pres_layer.values[:, ::-1], 'pressure_layer.xml')
+    write_xml(sensor_pos, "sensor_pos.xml", exp_setup)
+    write_xml(data.solar_zenith_angle.values, "solar_zenith_angle.xml", exp_setup)
+    write_xml(data.total_solar_irradiance.values, "total_solar_irradiance.xml", exp_setup)
+    write_xml(data.surface_albedo.values, "surface_albedo.xml", exp_setup)
+    write_xml(data.profile_weight.values, "profil_weight.xml", exp_setup)
+    write_xml(data.surface_temperature.values, "surface_temperature.xml", exp_setup)
+    write_xml(data.pres_layer.values[:, ::-1], "pressure_layer.xml", exp_setup)
+
     field_names = ["T", "z"]
-    spec_dict = species_name_mapping()
+    spec_dict = select_species(exp_setup)
     spec_values = [spec_dict[key] for key in spec_dict if spec_dict[key] is not None]
     spec_keys = [key for key in spec_dict if spec_dict[key] is not None]
     field_names += spec_values
 
     arr_gf4 = pyarts.arts.ArrayOfGriddedField4()
-    surface_elevation_arr = np.zeros(data.dims['site'])
-    height_arr = np.zeros((data.dims['site'], data.dims['layer']))
+    surface_elevation_arr = np.zeros(data.dims["site"])
+    height_arr = np.zeros((data.dims["site"], data.dims["layer"]))
     for site in range(data.dims["site"]):
         arr = np.zeros(
             (len(field_names), len(data.isel(site=0).pres_layer.values), 1, 1)
@@ -87,10 +87,48 @@ def main() -> None:
         )
         arr_gf4.append(gf4)
 
-    write_xml(height_arr, "additional_data/heights.xml")
-    write_xml(spec_values, "species.xml")
-    write_xml(surface_elevation_arr, "surface_altitudes.xml")
-    write_xml(arr_gf4, "atm_fields.xml")
+    write_xml(height_arr, "heights.xml", exp_setup)
+    write_xml(spec_values, "species.xml", exp_setup)
+    write_xml(surface_elevation_arr, "surface_altitudes.xml", exp_setup)
+    write_xml(arr_gf4, "atm_fields.xml", exp_setup)
+
+
+def readin_nc(filename, fields=None):
+    fh = ty.files.NetCDF4()
+    if fields is None:
+        return fh.read(filename)
+    return fh.read(filename, fields)
+
+
+def write_xml(data, filename, exp_setup) -> None:
+    path = f"{exp_setup.rfmip_path}{exp_setup.input_folder}"
+    pyarts.xml.save(data, filename=path + filename, format="ascii")
+
+
+def fetch_official_rfmip_data(exp_setup, rfmip_data_name):
+    "fetches the original rfmip data if its not already present."
+    filename = f"{exp_setup.rfmip_path}input/{rfmip_data_name}"
+    if os.path.exists(filename):
+        return
+
+    url = (
+        "http://aims3.llnl.gov/thredds/fileServer/user_pub_work/input4MIPs/CMIP6/"
+        "RFMIP/UColorado/UColorado-RFMIP-1-2/atmos/fx/multiple/none/v20190401/"
+        f"{rfmip_data_name}"
+    )
+
+    urlretrieve(url, filename)
+
+
+def select_species(exp_setup) -> dict:
+    if exp_setup.species == ["all"]:
+        return species_name_mapping()
+
+    spec_mapping = species_name_mapping()
+    spec_dict = {}
+    for spec in exp_setup.species:
+        spec_dict[spec] = spec_mapping[spec]
+    return spec_dict
 
 
 def species_name_mapping() -> dict:
@@ -155,9 +193,7 @@ def species_name_mapping() -> dict:
 # https://stackoverflow.com/questions/19513212/can-i-get-the-altitude-with-geopy-in-python-with-longitude-latitude
 def get_elevation(geo_data=None):
     if geo_data is None:
-        geo_data = pyarts.xml.load(
-            "/Users/jpetersen/rare/rfmip/input/sensor_pos.xml"
-        )
+        geo_data = pyarts.xml.load("/Users/jpetersen/rare/rfmip/input/sensor_pos.xml")
 
     geo_str = ""
     for pos in geo_data:
@@ -167,6 +203,13 @@ def get_elevation(geo_data=None):
     # one approach is to use pandas json functionality:
     elevation = np.array(pd.json_normalize(r, "results")["elevation"].values)
     return elevation
+
+
+def main():
+    exp_setup = read_exp_setup(
+        exp_name="test", path="/Users/jpetersen/rare/rfmip/experiment_setups/"
+    )
+    create_input_data(exp_setup=exp_setup)
 
 
 if __name__ == "__main__":

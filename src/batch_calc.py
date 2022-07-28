@@ -16,12 +16,10 @@ def run_arts_batch(exp_setup, verbosity=2):
 
     ws.NumericCreate('z0')
     ws.NumericCreate('surface_reflectivity_numeric')
-    ws.NumericCreate('solar_zenith_angle')
 
     ws.VectorCreate('surface_temperatures')
     ws.VectorCreate('surface_reflectivities')
     ws.VectorCreate('surface_altitudes')
-    ws.VectorCreate('solar_zenith_angles')
 
     ## Set Agendas 
     # Agenda for scalar gas absorption calculation
@@ -29,9 +27,6 @@ def run_arts_batch(exp_setup, verbosity=2):
 
     # cosmic background radiation
     ws.Copy(ws.iy_space_agenda, ws.iy_space_agenda__CosmicBackground)
-
-    # standard surface agenda (i.e., make use of surface_rtprop_agenda)
-    # ws.Copy(ws.iy_surface_agenda, ws.iy_surface_agenda__UseSurfaceRtprop)
 
     ws.Copy(ws.surface_rtprop_agenda, ws.surface_rtprop_agenda__lambertian_ReflFix_SurfTFromt_field)
 
@@ -42,7 +37,8 @@ def run_arts_batch(exp_setup, verbosity=2):
     ws.Copy(ws.ppath_step_agenda, ws.ppath_step_agenda__GeometricPath)
 
     ws.iy_surface_agenda = iy_surface_agenda # egal für disort?
-
+    # standard surface agenda (i.e., make use of surface_rtprop_agenda)
+    # ws.Copy(ws.iy_surface_agenda, ws.iy_surface_agenda__UseSurfaceRtprop)
 
     # Number of Stokes components to be computed
     print('setup and reading')
@@ -84,21 +80,19 @@ def run_arts_batch(exp_setup, verbosity=2):
     ## Atmosphere
     ws.AtmosphereSet1D()
     ws.ArrayOfVectorCreate('p_grids')
-    ws.p_grids = pyarts.xml.load(f'{exp_setup.input_path}pressure_layer.xml')
-    ws.batch_atm_fields_compact = pyarts.xml.load(f'{exp_setup.input_path}atm_fields.xml')
+    ws.p_grids = pyarts.xml.load(f'{exp_setup.rfmip_path}{exp_setup.input_folder}pressure_layer.xml')
+    ws.batch_atm_fields_compact = pyarts.xml.load(f'{exp_setup.rfmip_path}{exp_setup.input_folder}atm_fields.xml')
 
-
-    # species = pyarts.xml.load(f'{exp_setup.rfmip_path}input/species.xml')
-    # ws = add_species(ws, species=species)
-    ws = add_species(ws)
+    species = pyarts.xml.load(f"{exp_setup.rfmip_path}{exp_setup.input_folder}species.xml")
+    ws = add_species(ws, species)
 
     # Read a line file and a matching small frequency grid
     ws.abs_lines_per_speciesReadSpeciesSplitCatalog(
-       basename=f'{exp_setup.artscat_path}lines/'
+       basename=f'{exp_setup.arts_data_path}arts-cat-data/lines/'
     )
 
     ws.ReadXsecData(
-        basename=f'{exp_setup.artscat_path}xsec/'
+        basename=f'{exp_setup.arts_data_path}arts-cat-data/xsec/'
     )
 
     ws.abs_lines_per_speciesSetCutoff(option="ByLine", value=750e9)
@@ -115,19 +109,30 @@ def run_arts_batch(exp_setup, verbosity=2):
     ## Surface
     # set surface resolution
     ws.MatrixSetConstant(ws.z_surface, 1, 1, 0)
-    # Set surface relectivity
 
-
-    ws.surface_temperatures = pyarts.xml.load(f'{exp_setup.input_path}surface_temperature.xml')
-    ws.surface_reflectivities = pyarts.xml.load(f'{exp_setup.input_path}surface_albedo.xml')
-    ws.surface_altitudes = pyarts.xml.load(f'{exp_setup.input_path}surface_altitudes.xml')
-    # ws.solar_zenith_angles = pyarts.xml.load(f'{exp_setup.input_path}solar_zenith_angle.xml')
-    ws.solar_zenith_angles = np.linspace(0, 180, 100, endpoint=True)
+    
+    ws.surface_temperatures = pyarts.xml.load(f'{exp_setup.rfmip_path}{exp_setup.input_folder}surface_temperature.xml')
+    ws.surface_reflectivities = pyarts.xml.load(f'{exp_setup.rfmip_path}{exp_setup.input_folder}surface_albedo.xml')
+    ws.surface_altitudes = pyarts.xml.load(f'{exp_setup.rfmip_path}{exp_setup.input_folder}surface_altitudes.xml')
+    ws.solar_zenith_angles = pyarts.xml.load(f'{exp_setup.rfmip_path}{exp_setup.input_folder}solar_zenith_angle.xml')
     
     #Switch on gas scattering
     ws.gas_scattering_do = exp_setup.gas_scattering_do
     if exp_setup.gas_scattering_do:
             ws.gas_scattering_agenda = gas_scattering_agenda
+  
+    # Star or no star settings
+    if exp_setup.solar_type == 'None':
+        ws.gas_scattering_do = 0
+    else:
+        # add star
+        ws.gas_scattering_do = 1
+        ws.gas_scattering_agenda = gas_scattering_agenda
+        ws.NumericCreate('solar_zenith_angle')
+        ws.VectorCreate('solar_zenith_angles')
+        if exp_setup.solar_type == 'Spectrum':
+            ws.ArrayOfGriddedField2Create('star_spectras')
+            ws.star_spectra = pyarts.xml.load(f'{exp_setup.rfmip_path}{exp_setup.input_folder}star_spectrum.xml')
 
     # set angular grid
     ws.AngularGridsSetFluxCalc(N_za_grid=exp_setup.angular_grid['N_za_grid'], N_aa_grid=exp_setup.angular_grid['N_aa_grid'], za_grid_type=exp_setup.angular_grid['za_grid_type'])
@@ -140,12 +145,16 @@ def run_arts_batch(exp_setup, verbosity=2):
     ws.sensor_checkedCalc()
 
     ws.ybatch_start = 0
-    ws.ybatch_n = 100
+    ws.ybatch_n = len(ws.surface_temperatures.value) # loop over all sites
 
     # change batchcalc agenda based on star type
-    if exp_setup.solar_type == 'BlackBody':
+    if exp_setup.solar_type == 'None':
+        ws.dobatch_calc_agenda = dobatch_calc_agenda__disort
+    elif exp_setup.solar_type == 'BlackBody':
         ws.dobatch_calc_agenda = dobatch_calc_agenda__disort_blackbody
-    else:
+    elif exp_setup.solar_type == 'Spectrum':
+        ws.dobatch_calc_agenda = dobatch_calc_agenda__disort_spectrum
+
         print('Not yet implimented!')
 
     with ty.utils.Timer():
@@ -159,6 +168,38 @@ def run_arts_batch(exp_setup, verbosity=2):
     print('saving')
     ws.WriteXML('binary', ws.dobatch_spectral_irradiance_field, f'{exp_setup.rfmip_path}output/{exp_setup.name}/spectral_irradiance.xml')
 
+@pyarts.workspace.arts_agenda(allow_callbacks=False)
+def dobatch_calc_agenda__disort(ws):
+    # print batch
+    ws.Print(ws.ybatch_index, 0)
+
+    # set new atmosphere for batch
+    ws.Extract(ws.p_grid, ws.p_grids, ws.ybatch_index) # set p_grid for batch
+    ws.Extract(ws.atm_fields_compact, ws.batch_atm_fields_compact, ws.ybatch_index) # sets new atm
+    ws.Extract(ws.surface_skin_t, ws.surface_temperatures, ws.ybatch_index)
+    ws.MatrixSetConstant(ws.t_surface, 1, 1, ws.surface_skin_t)
+    ws.Extract(ws.surface_reflectivity_numeric, ws.surface_reflectivities, ws.ybatch_index)
+    ws.VectorSetConstant(ws.surface_scalar_reflectivity, 1, ws.surface_reflectivity_numeric)
+    ws.Extract(ws.z0, ws.surface_altitudes, ws.ybatch_index)
+    ws.MatrixSetConstant(ws.z_surface, 1, 1, ws.z0)
+
+    # recalcs the atmosphere
+    ws.AtmFieldsAndParticleBulkPropFieldFromCompact()
+
+    # Checks 
+    ws.atmgeom_checkedCalc()
+    ws.atmfields_checkedCalc()
+    ws.cloudbox_checkedCalc()
+    ws.propmat_clearsky_agenda_checkedCalc()
+
+    # Calculation
+    ws.DisortCalcClearSky(nstreams=6, quiet=0)
+    ws.spectral_irradiance_fieldFromSpectralRadianceField()
+
+    # free fields
+    ws.Tensor5SetConstant(ws.radiance_field, 0, 0, 0, 0, 0, 0.)
+    ws.Tensor4SetConstant(ws.irradiance_field, 0, 0, 0, 0, 0.)
+    ws.Tensor7SetConstant(ws.cloudbox_field, 0, 0, 0, 0, 0, 0, 0, 0.)
 
 @pyarts.workspace.arts_agenda(allow_callbacks=False)
 def dobatch_calc_agenda__disort_blackbody(ws):
@@ -177,6 +218,44 @@ def dobatch_calc_agenda__disort_blackbody(ws):
     ws.Extract(ws.solar_zenith_angle, ws.solar_zenith_angles, ws.ybatch_index)
 
     ws.starBlackbodySimple(distance=1.5e11, latitude=0, longitude=ws.solar_zenith_angle)
+
+    # recalcs the atmosphere
+    ws.AtmFieldsAndParticleBulkPropFieldFromCompact()
+
+    # Checks 
+    ws.atmgeom_checkedCalc()
+    ws.atmfields_checkedCalc()
+    ws.cloudbox_checkedCalc()
+    ws.propmat_clearsky_agenda_checkedCalc()
+
+    # Calculation
+    ws.DisortCalcClearSky(nstreams=6, quiet=0)
+    ws.spectral_irradiance_fieldFromSpectralRadianceField()
+
+    # free fields
+    ws.Tensor5SetConstant(ws.radiance_field, 0, 0, 0, 0, 0, 0.)
+    ws.Tensor4SetConstant(ws.irradiance_field, 0, 0, 0, 0, 0.)
+    ws.Tensor7SetConstant(ws.cloudbox_field, 0, 0, 0, 0, 0, 0, 0, 0.)
+
+
+@pyarts.workspace.arts_agenda(allow_callbacks=False)
+def dobatch_calc_agenda__disort_spectrum(ws):
+    # print batch
+    ws.Print(ws.ybatch_index, 0)
+
+    # set new atmosphere for batch
+    ws.Extract(ws.p_grid, ws.p_grids, ws.ybatch_index) # set p_grid for batch
+    ws.Extract(ws.atm_fields_compact, ws.batch_atm_fields_compact, ws.ybatch_index) # sets new atm
+    ws.Extract(ws.surface_skin_t, ws.surface_temperatures, ws.ybatch_index)
+    ws.MatrixSetConstant(ws.t_surface, 1, 1, ws.surface_skin_t)
+    ws.Extract(ws.surface_reflectivity_numeric, ws.surface_reflectivities, ws.ybatch_index)
+    ws.VectorSetConstant(ws.surface_scalar_reflectivity, 1, ws.surface_reflectivity_numeric)
+    ws.Extract(ws.z0, ws.surface_altitudes, ws.ybatch_index)
+    ws.MatrixSetConstant(ws.z_surface, 1, 1, ws.z0)
+    ws.Extract(ws.solar_zenith_angle, ws.solar_zenith_angles, ws.ybatch_index)
+    ws.Extract(ws.star_spectrum_raw, ws.star_spectras, ws.ybatch_index)
+
+    ws.starFromGrid(temperature=0, distance=1.5e11, latitude=0, longitude=ws.solar_zenith_angle)
 
     # recalcs the atmosphere
     ws.AtmFieldsAndParticleBulkPropFieldFromCompact()
@@ -232,7 +311,7 @@ def iy_surface_agenda(ws):
     ws.iySurfaceLambertianDirect()
 
 
-def add_species(ws, species=['H2O', 'N2', 'O2', 'O3', 'CO2', 'CH4']):
+def add_species(ws, species):
     # NO NH3!!
     # replace CO2 with CO2 LineMixing
     if 'abs_species-H2O' in species:
@@ -245,10 +324,9 @@ def add_species(ws, species=['H2O', 'N2', 'O2', 'O3', 'CO2', 'CH4']):
         replace_values(species, 'abs_species-O2', ['abs_species-O2', 'abs_species-O2-CIAfunCKDMT100'])   
     if 'abs_species-N2' in species:
         replace_values(species, 'abs_species-N2', ['abs_species-N2', 'abs_species-N2-CIAfunCKDMT252', 'abs_species-N2-CIAfunCKDMT252'])
+
+    species = [spec[12:] for spec in species]
     
-    # print(species)
-    # species = [x for xs in species for x in xs] # flatten list
-    # species = [spec[12:] for spec in species]
     ws.abs_speciesSet(species=species)
     return ws
 
@@ -287,7 +365,7 @@ def solar_spectrum(ws, solar_zenith_angle=0.0, star_type=None):
         						latitude=0,
                                 longitude=solar_zenith_angle)
     elif star_type=='Spectrum':
-        gf2 = pyarts.xml.load(f"{exp_setup.artsxml_path}star/Sun/solar_spectrum.xml")
+        gf2 = pyarts.xml.load(f"{exp_setup.arts_data_path}arts-xml-data/star/Sun/solar_spectrum.xml")
         ws.star_spectrum_raw = gf2
         ws.starFromGrid(temperature=0,
                         distance=1.5e11,
@@ -304,8 +382,7 @@ def solar_spectrum(ws, solar_zenith_angle=0.0, star_type=None):
     return ws, star_spectrum
 
 def main():
-    # exp = read_exp_setup(exp_name='test')
-    exp = read_exp_setup(exp_name='solar_angle')
+    exp = read_exp_setup(exp_name='solar_angle', path='/Users/jpetersen/rare/rfmip/experiment_setups/')
     print(exp)
     run_arts_batch(exp)
 
