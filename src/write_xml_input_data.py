@@ -24,6 +24,7 @@ def create_input_data(exp_setup) -> None:
     write_xml(sensor_pos, "sensor_pos.xml", exp_setup)
     write_xml(data.solar_zenith_angle.values, "solar_zenith_angle.xml", exp_setup)
     write_xml(data.total_solar_irradiance.values, "total_solar_irradiance.xml", exp_setup)
+    scaled_solar_spectrum(exp_setup=exp_setup)
     write_xml(data.surface_albedo.values, "surface_albedo.xml", exp_setup)
     write_xml(data.profile_weight.values, "profil_weight.xml", exp_setup)
     write_xml(data.surface_temperature.values, "surface_temperature.xml", exp_setup)
@@ -203,6 +204,27 @@ def get_elevation(geo_data=None):
     # one approach is to use pandas json functionality:
     elevation = np.array(pd.json_normalize(r, "results")["elevation"].values)
     return elevation
+
+
+def scaled_solar_spectrum(exp_setup) -> None:
+    total_solar_irradiances = pyarts.xml.load(f"{exp_setup.rfmip_path}{exp_setup.input_folder}total_solar_irradiance.xml")
+    gf2 = pyarts.xml.load(f"{exp_setup.arts_data_path}arts-xml-data/star/Sun/solar_spectrum.xml")
+    arr_gf2 = pyarts.arts.ArrayOfGriddedField2()
+
+    sigma = 5.670375419e-8
+    star_radius = 6.96342e8
+    star_distance = 1.495978707e11
+    star_effective_temperature = 5772
+    alpha = np.arctan2(star_radius, star_distance)
+    tsi_spectrum = sigma * star_effective_temperature**4 * np.sin(alpha)**2
+    
+    for tsi in total_solar_irradiances:
+        gf2_scaled = gf2
+        sigma * 5772**4 * np.sin(alpha)**2
+        gf2_scaled.data = gf2_scaled.data * tsi/tsi_spectrum
+        arr_gf2.append(gf2_scaled)
+
+    write_xml(arr_gf2, "star_spectra.xml", exp_setup)
 
 
 def main():

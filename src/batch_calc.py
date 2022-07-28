@@ -110,29 +110,28 @@ def run_arts_batch(exp_setup, verbosity=2):
     # set surface resolution
     ws.MatrixSetConstant(ws.z_surface, 1, 1, 0)
 
-    
     ws.surface_temperatures = pyarts.xml.load(f'{exp_setup.rfmip_path}{exp_setup.input_folder}surface_temperature.xml')
     ws.surface_reflectivities = pyarts.xml.load(f'{exp_setup.rfmip_path}{exp_setup.input_folder}surface_albedo.xml')
     ws.surface_altitudes = pyarts.xml.load(f'{exp_setup.rfmip_path}{exp_setup.input_folder}surface_altitudes.xml')
-    ws.solar_zenith_angles = pyarts.xml.load(f'{exp_setup.rfmip_path}{exp_setup.input_folder}solar_zenith_angle.xml')
     
-    #Switch on gas scattering
-    ws.gas_scattering_do = exp_setup.gas_scattering_do
-    if exp_setup.gas_scattering_do:
-            ws.gas_scattering_agenda = gas_scattering_agenda
   
     # Star or no star settings
     if exp_setup.solar_type == 'None':
         ws.gas_scattering_do = 0
+        ws.dobatch_calc_agenda = dobatch_calc_agenda__disort
     else:
-        # add star
         ws.gas_scattering_do = 1
         ws.gas_scattering_agenda = gas_scattering_agenda
         ws.NumericCreate('solar_zenith_angle')
         ws.VectorCreate('solar_zenith_angles')
-        if exp_setup.solar_type == 'Spectrum':
+        ws.solar_zenith_angles = pyarts.xml.load(f'{exp_setup.rfmip_path}{exp_setup.input_folder}solar_zenith_angle.xml')
+    
+        if exp_setup.solar_type == 'BlackBody':
+            ws.dobatch_calc_agenda = dobatch_calc_agenda__disort_blackbody
+        elif exp_setup.solar_type == 'Spectrum':
             ws.ArrayOfGriddedField2Create('star_spectras')
-            ws.star_spectra = pyarts.xml.load(f'{exp_setup.rfmip_path}{exp_setup.input_folder}star_spectrum.xml')
+            ws.star_spectras = pyarts.xml.load(f'{exp_setup.rfmip_path}{exp_setup.input_folder}star_spectra.xml')
+            ws.dobatch_calc_agenda = dobatch_calc_agenda__disort_spectrum
 
     # set angular grid
     ws.AngularGridsSetFluxCalc(N_za_grid=exp_setup.angular_grid['N_za_grid'], N_aa_grid=exp_setup.angular_grid['N_aa_grid'], za_grid_type=exp_setup.angular_grid['za_grid_type'])
@@ -147,16 +146,6 @@ def run_arts_batch(exp_setup, verbosity=2):
     ws.ybatch_start = 0
     ws.ybatch_n = len(ws.surface_temperatures.value) # loop over all sites
 
-    # change batchcalc agenda based on star type
-    if exp_setup.solar_type == 'None':
-        ws.dobatch_calc_agenda = dobatch_calc_agenda__disort
-    elif exp_setup.solar_type == 'BlackBody':
-        ws.dobatch_calc_agenda = dobatch_calc_agenda__disort_blackbody
-    elif exp_setup.solar_type == 'Spectrum':
-        ws.dobatch_calc_agenda = dobatch_calc_agenda__disort_spectrum
-
-        print('Not yet implimented!')
-
     with ty.utils.Timer():
         print('starting calculation')
         ws.DOBatchCalc()
@@ -167,6 +156,7 @@ def run_arts_batch(exp_setup, verbosity=2):
     
     print('saving')
     ws.WriteXML('binary', ws.dobatch_spectral_irradiance_field, f'{exp_setup.rfmip_path}output/{exp_setup.name}/spectral_irradiance.xml')
+
 
 @pyarts.workspace.arts_agenda(allow_callbacks=False)
 def dobatch_calc_agenda__disort(ws):
@@ -200,6 +190,7 @@ def dobatch_calc_agenda__disort(ws):
     ws.Tensor5SetConstant(ws.radiance_field, 0, 0, 0, 0, 0, 0.)
     ws.Tensor4SetConstant(ws.irradiance_field, 0, 0, 0, 0, 0.)
     ws.Tensor7SetConstant(ws.cloudbox_field, 0, 0, 0, 0, 0, 0, 0, 0.)
+
 
 @pyarts.workspace.arts_agenda(allow_callbacks=False)
 def dobatch_calc_agenda__disort_blackbody(ws):
@@ -330,6 +321,7 @@ def add_species(ws, species):
     ws.abs_speciesSet(species=species)
     return ws
 
+
 def lookup_table(ws, exp_setup):
     if os.path.exists(f'{exp_setup.rfmip_path}lookup_tables/{exp_setup.name}/lookup_table'):
         # load LUT
@@ -348,38 +340,14 @@ def lookup_table(ws, exp_setup):
         ws.WriteXML('binary', ws.abs_lookup, f'{exp_setup.rfmip_path}lookup_tables/{exp_setup.name}/lookup.xml')
     return ws
 
+
 def replace_item_in_list(item_list, old_val, new_val):
     return list(map(lambda x: x.replace(old_val, new_val), item_list))
+
 
 def replace_values(list_to_replace, item_to_replace, item_to_replace_with):
     return [item_to_replace_with if item == item_to_replace else item for item in list_to_replace]
 
-def solar_spectrum(ws, solar_zenith_angle=0.0, star_type=None):
-    ## set star
-    ws.Touch(ws.stars)
-    
-    if star_type==None:
-        ws.star_do = 0
-    elif star_type=='BlackBody':
-        ws.starBlackbodySimple(distance=1.5e11,
-        						latitude=0,
-                                longitude=solar_zenith_angle)
-    elif star_type=='Spectrum':
-        gf2 = pyarts.xml.load(f"{exp_setup.arts_data_path}arts-xml-data/star/Sun/solar_spectrum.xml")
-        ws.star_spectrum_raw = gf2
-        ws.starFromGrid(temperature=0,
-                        distance=1.5e11,
-                        latitude=0,
-                        longitude=solar_zenith_angle)
-    elif star_type=='White': # white in frequency
-        ws.starBlackbodySimple(distance=1.5e11,
-        						latitude=0,
-                                longitude=solar_zenith_angle)
-        ws.stars.value[0].spectrum[:,0] = np.ones(np.shape(ws.stars.value[0].spectrum[:,0])) * np.max(ws.stars.value[0].spectrum)
-
-    star_spectrum = np.array(ws.stars.value[0].spectrum)[:,0].copy()
-
-    return ws, star_spectrum
 
 def main():
     exp = read_exp_setup(exp_name='solar_angle', path='/Users/jpetersen/rare/rfmip/experiment_setups/')
