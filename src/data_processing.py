@@ -23,9 +23,7 @@ def read_heights(exp_setup) -> np.ndarray:
 
 
 def combine_sites(data, exp_setup) -> np.ndarray:
-    weights = pyarts.xml.load(
-        f"{exp_setup.rfmip_path}input/{exp_setup.name}/profil_weight.xml"
-    )
+    weights = pyarts.xml.load(f'{exp_setup.rfmip_path}{exp_setup.input_folder}profil_weight.xml')
     data = np.average(data, axis=0, weights=weights)
     return data
 
@@ -35,7 +33,7 @@ def save_data(data, exp_setup, name) -> None:
 
 
 def main() -> None:
-    exp_setup = read_exp_setup(exp_name="test")
+    exp_setup = read_exp_setup(exp_name='test', path='/Users/jpetersen/rare/rfmip/experiment_setups/')
     data = read_spectral_irradiance(exp_setup)
     heights = read_heights(exp_setup)
     combined_data = combine_sites(data, exp_setup)

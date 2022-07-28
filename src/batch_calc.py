@@ -28,9 +28,6 @@ def run_arts_batch(exp_setup, verbosity=2):
     # cosmic background radiation
     ws.Copy(ws.iy_space_agenda, ws.iy_space_agenda__CosmicBackground)
 
-    # standard surface agenda (i.e., make use of surface_rtprop_agenda)
-    # ws.Copy(ws.iy_surface_agenda, ws.iy_surface_agenda__UseSurfaceRtprop)
-
     ws.Copy(ws.surface_rtprop_agenda, ws.surface_rtprop_agenda__lambertian_ReflFix_SurfTFromt_field)
 
     # sensor-only path
@@ -39,10 +36,9 @@ def run_arts_batch(exp_setup, verbosity=2):
     # Geometric Ppath (no refraction)
     ws.Copy(ws.ppath_step_agenda, ws.ppath_step_agenda__GeometricPath)
 
-    ws.gas_scattering_agenda = gas_scattering_agenda
-
     ws.iy_surface_agenda = iy_surface_agenda # egal für disort?
-
+    # standard surface agenda (i.e., make use of surface_rtprop_agenda)
+    # ws.Copy(ws.iy_surface_agenda, ws.iy_surface_agenda__UseSurfaceRtprop)
 
     # Number of Stokes components to be computed
     print('setup and reading')
@@ -70,34 +66,33 @@ def run_arts_batch(exp_setup, verbosity=2):
         print('Use a valid option fo which grid to use. Option are frequency, wavelength or kayser.')
 
     # set geographical position
-    ws.lat_true=[exp_setup.sensor_pos['lat']]
-    ws.lon_true=[exp_setup.sensor_pos['lon']]
+    ws.lat_true=[0]
+    ws.lon_true=[0]
 
     # No sensor properties
     ws.sensorOff()
     
     # Definition of sensor position and line of sight (LOS)
-    ws.sensor_pos = [[exp_setup.sensor_pos['alt']]]
+    ws.sensor_pos = [[0]]
     ws.sensor_los = [[0]] # irrelevant for fluxes
 
     ## Atmosphere
     ws.AtmosphereSet1D()
     ws.ArrayOfVectorCreate('p_grids')
-    ws.p_grids = pyarts.xml.load(f'{exp_setup.rfmip_path}input/pressure_layer.xml')
-    ws.batch_atm_fields_compact = pyarts.xml.load(f'{exp_setup.rfmip_path}input/atm_fields.xml')
+    ws.p_grids = pyarts.xml.load(f'{exp_setup.rfmip_path}{exp_setup.input_folder}pressure_layer.xml')
+    ws.batch_atm_fields_compact = pyarts.xml.load(f'{exp_setup.rfmip_path}{exp_setup.input_folder}atm_fields.xml')
 
 
-    # species = pyarts.xml.load(f'{exp_setup.rfmip_path}input/species.xml')
-    # ws = add_species(ws, species=species)
-    ws = add_species(ws)
+    species = pyarts.xml.load(f"{exp_setup.rfmip_path}{exp_setup.input_folder}species.xml")
+    ws = add_species(ws, species)
 
     # Read a line file and a matching small frequency grid
     ws.abs_lines_per_speciesReadSpeciesSplitCatalog(
-       basename=f'{exp_setup.artscat_path}lines/'
+       basename=f'{exp_setup.arts_data_path}arts-cat-data/lines/'
     )
 
     ws.ReadXsecData(
-        basename=f'{exp_setup.artscat_path}xsec/'
+        basename=f'{exp_setup.arts_data_path}arts-cat-data/xsec/'
     )
 
     ws.abs_lines_per_speciesSetCutoff(option="ByLine", value=750e9)
@@ -117,16 +112,19 @@ def run_arts_batch(exp_setup, verbosity=2):
     # Set surface relectivity
 
 
-    ws.surface_temperatures = pyarts.xml.load(f'{exp_setup.rfmip_path}input/surface_temperature.xml')
-    ws.surface_reflectivities = pyarts.xml.load(f'{exp_setup.rfmip_path}input/surface_albedo.xml')
-    ws.surface_altitudes = pyarts.xml.load(f'{exp_setup.rfmip_path}input/surface_altitudes.xml')
+    ws.surface_temperatures = pyarts.xml.load(f'{exp_setup.rfmip_path}{exp_setup.input_folder}surface_temperature.xml')
+    ws.surface_reflectivities = pyarts.xml.load(f'{exp_setup.rfmip_path}{exp_setup.input_folder}surface_albedo.xml')
+    ws.surface_altitudes = pyarts.xml.load(f'{exp_setup.rfmip_path}{exp_setup.input_folder}surface_altitudes.xml')
     
   
-    #Switch on gas scattering
-    ws.gas_scattering_do = exp_setup.gas_scattering_do
-
-    # add star
-    ws, _ = solar_spectrum(ws, sun_pos=[exp_setup.sun_pos['lat'], exp_setup.sun_pos['lon']], star_type='BlackBody')
+    # Star or no star settings
+    if exp_setup.solar_type == 'None':
+        ws.gas_scattering_do = 0
+    else:
+        # add star
+        ws.gas_scattering_do = 1
+        ws.gas_scattering_agenda = gas_scattering_agenda
+        ws, _ = solar_spectrum(ws, sun_pos=[0., 0.], star_type='BlackBody')
 
     # set angular grid
     ws.AngularGridsSetFluxCalc(N_za_grid=exp_setup.angular_grid['N_za_grid'], N_aa_grid=exp_setup.angular_grid['N_aa_grid'], za_grid_type=exp_setup.angular_grid['za_grid_type'])
@@ -139,7 +137,7 @@ def run_arts_batch(exp_setup, verbosity=2):
     ws.sensor_checkedCalc()
 
     ws.ybatch_start = 0
-    ws.ybatch_n = 100
+    ws.ybatch_n = len(ws.surface_temperatures.value) # loop over all sites
 
     ws.dobatch_calc_agenda = dobatch_calc_agenda__disort
     with ty.utils.Timer():
@@ -223,7 +221,7 @@ def iy_surface_agenda(ws):
     ws.iySurfaceLambertianDirect()
 
 
-def add_species(ws, species=['H2O', 'N2', 'O2', 'O3', 'CO2', 'CH4']):
+def add_species(ws, species):
     # NO NH3!!
     # replace CO2 with CO2 LineMixing
     if 'abs_species-H2O' in species:
@@ -236,10 +234,9 @@ def add_species(ws, species=['H2O', 'N2', 'O2', 'O3', 'CO2', 'CH4']):
         replace_values(species, 'abs_species-O2', ['abs_species-O2', 'abs_species-O2-CIAfunCKDMT100'])   
     if 'abs_species-N2' in species:
         replace_values(species, 'abs_species-N2', ['abs_species-N2', 'abs_species-N2-CIAfunCKDMT252', 'abs_species-N2-CIAfunCKDMT252'])
+
+    species = [spec[12:] for spec in species]
     
-    # print(species)
-    # species = [x for xs in species for x in xs] # flatten list
-    # species = [spec[12:] for spec in species]
     ws.abs_speciesSet(species=species)
     return ws
 
@@ -279,7 +276,7 @@ def solar_spectrum(ws, sun_pos=np.array([0., 0.,]), star_type=None):
         						latitude=sun_pos[0],
                                 longitude=sun_pos[1])
     elif star_type=='Spectrum':
-        gf2 = pyarts.xml.load(f"{exp_setup.artsxml_path}star/Sun/solar_spectrum.xml")
+        gf2 = pyarts.xml.load(f"{exp_setup.arts_data_path}arts-xml-data/star/Sun/solar_spectrum.xml")
         ws.star_spectrum_raw = gf2
         ws.starFromGrid(temperature=0,
                         distance=1.5e11,
@@ -296,7 +293,7 @@ def solar_spectrum(ws, sun_pos=np.array([0., 0.,]), star_type=None):
     return ws, star_spectrum
 
 def main():
-    exp = read_exp_setup(exp_name='test')
+    exp = read_exp_setup(exp_name='test', path='/Users/jpetersen/rare/rfmip/experiment_setups/')
     print(exp)
     run_arts_batch(exp)
 

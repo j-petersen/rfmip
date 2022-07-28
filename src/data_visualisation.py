@@ -33,8 +33,7 @@ def plot_irradiance(heights, irrad, lam_grid, exp_setup, index) -> None:
     plt.show()
 
 
-def main() -> None:
-    exp_setup = read_exp_setup(exp_name="test")
+def plot_flux_profiles(exp_setup) -> None:
     combined_data = pyarts.xml.load(
         f"{exp_setup.rfmip_path}output/{exp_setup.name}/combined_spectral_irradiance.xml"
     )  # wavelength, pressure, down-/upward
@@ -94,6 +93,11 @@ def main() -> None:
                 exp_setup=exp_setup,
                 index=i,
             )
+
+
+def main():
+    exp_setup = read_exp_setup(exp_name='test', path='/Users/jpetersen/rare/rfmip/experiment_setups/')
+    plot_flux_profiles(exp_setup=exp_setup)
 
 
 if __name__ == "__main__":
