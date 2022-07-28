@@ -109,8 +109,6 @@ def run_arts_batch(exp_setup, verbosity=2):
     ## Surface
     # set surface resolution
     ws.MatrixSetConstant(ws.z_surface, 1, 1, 0)
-    # Set surface relectivity
-
 
     ws.surface_temperatures = pyarts.xml.load(f'{exp_setup.rfmip_path}{exp_setup.input_folder}surface_temperature.xml')
     ws.surface_reflectivities = pyarts.xml.load(f'{exp_setup.rfmip_path}{exp_setup.input_folder}surface_albedo.xml')

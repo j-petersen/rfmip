@@ -30,7 +30,6 @@ def plot_irradiance(heights, irrad, lam_grid, exp_setup, index) -> None:
     fig.savefig(
         f"{exp_setup.rfmip_path}plots/{exp_setup.name}/diffuse_flux{index}.png", dpi=200
     )
-    plt.show()
 
 
 def plot_flux_profiles(exp_setup) -> None:
@@ -93,6 +92,8 @@ def plot_flux_profiles(exp_setup) -> None:
                 exp_setup=exp_setup,
                 index=i,
             )
+
+    plt.show()
 
 
 def main():

@@ -16,7 +16,7 @@ def read_spectral_irradiance(exp_setup) -> np.ndarray:
 def read_heights(exp_setup) -> np.ndarray:
     data = np.squeeze(
         pyarts.xml.load(
-            f"{exp_setup.rfmip_path}input/{exp_setup.name}/additional_data/heights.xml"
+            f"{exp_setup.rfmip_path}{exp_setup.input_folder}heights.xml"
         )
     )
     return data
