@@ -96,6 +96,34 @@ def plot_flux_profiles(exp_setup) -> None:
     plt.show()
 
 
+def plot_olr(exp_setup):
+    combined_data = pyarts.xml.load(
+        f"{exp_setup.rfmip_path}output/{exp_setup.name}/combined_spectral_irradiance.xml"
+    )[:,-1,1] # all freqs, highest level, upward
+
+    spectral_grid = np.linspace(
+        exp_setup.spectral_grid["min"],
+        exp_setup.spectral_grid["max"],
+        exp_setup.spectral_grid["n"],
+        endpoint=True,
+    )
+
+    ty.plots.styles.use(["typhon", "typhon-dark"])
+    fig, ax = plt.subplots(1, 1, figsize=(12, 9))
+
+    ax.plot(spectral_grid, combined_data)
+
+    ax.set_xlabel(r"wavenumber / cm$^{-1}$")
+    ax.set_ylabel(r"spectral irradiance / W\,m$^{-2}$\,cm")
+    ax.legend()
+    if not os.path.exists(f"{exp_setup.rfmip_path}plots/{exp_setup.name}/"):
+        os.mkdir(f"{exp_setup.rfmip_path}plots/{exp_setup.name}/")
+    fig.savefig(
+        f"{exp_setup.rfmip_path}plots/{exp_setup.name}/olr.png", dpi=200
+    )
+    plt.show()
+
+
 def main():
     exp_setup = read_exp_setup(exp_name='test', path='/Users/jpetersen/rare/rfmip/experiment_setups/')
     plot_flux_profiles(exp_setup=exp_setup)

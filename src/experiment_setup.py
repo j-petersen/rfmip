@@ -80,13 +80,13 @@ def new_test_setup():
 def olr_setup():
     exp = ExperimentSetup(
         name='olr',
-        description='goal is to reproduce a olr plot',
+        description='Calculate longwave spectrum at different vertical levels. One goal is to reproduce an olr plot.',
         rfmip_path='/Users/jpetersen/rare/rfmip/',
         input_folder='input/rfmip/',
         arts_data_path='/Users/jpetersen/rare/',
         solar_type='None',
         which_spectral_grid='kayser',
-        spectral_grid={'min': 1, 'max': 2500, 'n': 100},
+        spectral_grid={'min': 1, 'max': 3_000, 'n': 30},
         species=['water_vapor', 'ozone', 'carbon_dioxide_GM', 'methane_GM', 'nitrous_oxide_GM'],
         angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'}
     )

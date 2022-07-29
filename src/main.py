@@ -6,7 +6,7 @@ import batch_calc as calc
 import data_processing as post_pro
 import data_visualisation as vis
 
-def main():
+def solar_angle_dep():
     # Write experiment setup
     # setup.new_test_setup()
     setup.solar_angle_dependency_setup()
@@ -39,6 +39,31 @@ def main():
     # Visualisation
     print('Visualisation')
     vis.plot_flux_profiles(exp_setup=exp_setup)
+
+
+def olr_plot() -> None:
+    setup.olr_setup()
+    exp_setup = setup.read_exp_setup(exp_name='olr', path='/Users/jpetersen/rare/rfmip/experiment_setups/')
+    
+    # Create input data
+    print('Create input data')
+    input_data.create_input_data(exp_setup)
+
+    # Calculation
+    print('Calculation')
+    calc.run_arts_batch(exp_setup)
+   
+    data = post_pro.read_spectral_irradiance(exp_setup)
+    combined_data = post_pro.combine_sites(data, exp_setup)
+
+    post_pro.save_data(combined_data, exp_setup, "combined_spectral_irradiance")
+
+    vis.plot_olr(exp_setup=exp_setup)
+
+
+def main():
+    # solar_angle_dep()
+    olr_plot()
 
 
 if __name__ == '__main__':
