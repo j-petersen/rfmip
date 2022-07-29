@@ -5,6 +5,7 @@ import typhon as ty
 import matplotlib.pyplot as plt
 
 from experiment_setup import read_exp_setup
+from lookuptable import LookUpTable
 
 def run_arts_batch(exp_setup, verbosity=2):
     """Run Arts Calculation for RFMIP. """
@@ -104,7 +105,8 @@ def run_arts_batch(exp_setup, verbosity=2):
     ws.propmat_clearsky_agendaSetAutomatic()
 
     ## Lookup Table
-    ws = lookup_table(ws, exp_setup)
+    lut = LookUpTable(exp_setup=exp_setup, ws=ws)
+    lut.calculate()
 
     ## Surface
     # set surface resolution
@@ -322,29 +324,6 @@ def add_species(ws, species):
     return ws
 
 
-def lookup_table(ws, exp_setup):
-    if os.path.exists(f'{exp_setup.rfmip_path}lookup_tables/{exp_setup.name}/lookup_table'):
-        # load LUT
-        ws.ReadXML(ws.abs_lookup, f'{exp_setup.rfmip_path}lookup_tables/{exp_setup.name}/lookup.xml')
-        ws.abs_lookupAdapt() # Adapts a gas absorption lookup table to the current calculation. Removes unnessesary freqs are species.
-    else:
-        # re calc and save LUT
-        if not os.path.exists(f'{exp_setup.rfmip_path}lookup_tables/{exp_setup.name}/'):
-            os.mkdir(f'{exp_setup.rfmip_path}lookup_tables/{exp_setup.name}/')
-
-        ws.abs_lookupSetupBatch()
-        ws.abs_xsec_agenda_checkedCalc()
-        ws.lbl_checkedCalc()
-        ws.abs_lookupCalc()
-
-        ws.WriteXML('binary', ws.abs_lookup, f'{exp_setup.rfmip_path}lookup_tables/{exp_setup.name}/lookup.xml')
-    return ws
-
-
-def replace_item_in_list(item_list, old_val, new_val):
-    return list(map(lambda x: x.replace(old_val, new_val), item_list))
-
-
 def replace_values(list_to_replace, item_to_replace, item_to_replace_with):
     return [item_to_replace_with if item == item_to_replace else item for item in list_to_replace]
 
@@ -353,6 +332,7 @@ def main():
     exp = read_exp_setup(exp_name='solar_angle', path='/Users/jpetersen/rare/rfmip/experiment_setups/')
     print(exp)
     run_arts_batch(exp)
+
 
 if __name__ == '__main__':
     main()

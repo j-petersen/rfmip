@@ -5,6 +5,7 @@ import experiment_setup as setup
 import batch_calc as calc
 import data_processing as post_pro
 import data_visualisation as vis
+from lookuptable import LookUpTable
 
 def main():
     # Write experiment setup
@@ -17,7 +18,8 @@ def main():
     input_data.create_input_data(exp_setup)
 
     # Lookuptable (not yet implemented)
-    # ToDo seperate lookuptable calc from main calculation
+    lut = LookUpTable(exp_setup=exp_setup)
+    lut.calculate()
 
     # Calculation
     print('Calculation')
