@@ -1,2 +1,5 @@
 input/*
 output/*
+*.pyc
+*.png
+lookup_tables/*
