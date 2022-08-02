@@ -30,12 +30,8 @@ class LookUpTable():
 
 
     def load_atmospheric_state(self):
-        self.ws.execute_controlfile("general/general.arts")
         self.ws.execute_controlfile("general/agendas.arts")
         self.ws.execute_controlfile("general/planet_earth.arts")
-        self.ws.Copy(self.ws.abs_xsec_agenda, self.ws.abs_xsec_agenda__noCIA)
-        # self.ws.Copy(self.ws.abs_xsec_agenda, self.ws.abs_xsec_agenda__withCIA)
-        # self.ws.Copy(self.ws.abs_xsec_agenda, self.ws.abs_xsec_agenda__withCIAextraT)
 
         self.f_grid_from_spectral_grid()
         self.ws.AtmosphereSet1D()
@@ -76,10 +72,13 @@ class LookUpTable():
         if not os.path.exists(f'{self.exp_setup.rfmip_path}lookup_tables/{self.exp_setup.name}/'):
             os.mkdir(f'{self.exp_setup.rfmip_path}lookup_tables/{self.exp_setup.name}/')
 
+        self.ws.propmat_clearsky_agendaSetAutomatic()
+
         self.ws.abs_lookupSetupBatch()
-        self.ws.abs_xsec_agenda_checkedCalc()
         self.ws.lbl_checkedCalc()
         self.ws.abs_lookupCalc()
+
+        self.ws.propmat_clearsky_agendaSetAutomaticForLookup()
 
         self.ws.WriteXML('binary', self.ws.abs_lookup, f'{self.exp_setup.rfmip_path}lookup_tables/{self.exp_setup.name}/lookup.xml')
  

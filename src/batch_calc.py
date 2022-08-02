@@ -10,7 +10,6 @@ from lookuptable import LookUpTable
 def run_arts_batch(exp_setup, verbosity=2):
     """Run Arts Calculation for RFMIP. """
     ws = pyarts.workspace.Workspace(verbosity=verbosity)
-    ws.execute_controlfile("general/general.arts")
     ws.execute_controlfile("general/continua.arts")
     ws.execute_controlfile("general/agendas.arts")
     ws.execute_controlfile("general/planet_earth.arts")
@@ -24,22 +23,22 @@ def run_arts_batch(exp_setup, verbosity=2):
 
     ## Set Agendas 
     # Agenda for scalar gas absorption calculation
-    ws.Copy(ws.abs_xsec_agenda, ws.abs_xsec_agenda__noCIA)
+    ws.gas_scattering_agenda = gas_scattering_agenda
 
     # cosmic background radiation
-    ws.Copy(ws.iy_space_agenda, ws.iy_space_agenda__CosmicBackground)
+    ws.iy_space_agenda = ws.iy_space_agenda__CosmicBackground
 
-    ws.Copy(ws.surface_rtprop_agenda, ws.surface_rtprop_agenda__lambertian_ReflFix_SurfTFromt_field)
+    ws.surface_rtprop_agenda = ws.surface_rtprop_agenda__lambertian_ReflFix_SurfTFromt_field
 
     # sensor-only path
-    ws.Copy(ws.ppath_agenda, ws.ppath_agenda__FollowSensorLosPath)
+    ws.ppath_agenda = ws.ppath_agenda__FollowSensorLosPath
 
     # Geometric Ppath (no refraction)
-    ws.Copy(ws.ppath_step_agenda, ws.ppath_step_agenda__GeometricPath)
+    ws.ppath_step_agenda = ws.ppath_step_agenda__GeometricPath
 
     ws.iy_surface_agenda = iy_surface_agenda # egal für disort?
     # standard surface agenda (i.e., make use of surface_rtprop_agenda)
-    # ws.Copy(ws.iy_surface_agenda, ws.iy_surface_agenda__UseSurfaceRtprop)
+    # ws.iy_surface_agenda = ws.iy_surface_agenda__UseSurfaceRtprop
 
     # Number of Stokes components to be computed
     print('setup and reading')
@@ -141,7 +140,6 @@ def run_arts_batch(exp_setup, verbosity=2):
 
     # Check model atmosphere
     ws.scat_data_checkedCalc()
-    ws.abs_xsec_agenda_checkedCalc()
     ws.lbl_checkedCalc()
     ws.sensor_checkedCalc()
 
