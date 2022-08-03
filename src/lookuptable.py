@@ -64,7 +64,7 @@ class LookUpTable():
             lam_grid = np.linspace(self.exp_setup.spectral_grid['min'], self.exp_setup.spectral_grid['max'], self.exp_setup.spectral_grid['n'], endpoint=True)*1e-9
             self.ws.f_grid = ty.physics.wavelength2frequency(lam_grid)[::-1]
         elif self.exp_setup.which_spectral_grid == 'kayser':
-            kayser_grid = np.linspace(self.exp_setup.spectral_grid['min'], self.exp_setup.spectral_grid['max'], self.exp_setup.spectral_grid['n'], endpoint=True)
+            kayser_grid = np.linspace(self.exp_setup.spectral_grid['min'], self.exp_setup.spectral_grid['max'], self.exp_setup.spectral_grid['n'], endpoint=True)*1e2
             self.ws.f_grid = ty.physics.wavenumber2frequency(kayser_grid)
 
 

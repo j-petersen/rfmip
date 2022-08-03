@@ -60,7 +60,7 @@ def run_arts_batch(exp_setup, verbosity=2):
         lam_grid = np.linspace(exp_setup.spectral_grid['min'], exp_setup.spectral_grid['max'], exp_setup.spectral_grid['n'], endpoint=True)*1e-9
         ws.f_grid = ty.physics.wavelength2frequency(lam_grid)[::-1]
     elif exp_setup.which_spectral_grid == 'kayser':
-        kayser_grid = np.linspace(exp_setup.spectral_grid['min'], exp_setup.spectral_grid['max'], exp_setup.spectral_grid['n'], endpoint=True)
+        kayser_grid = np.linspace(exp_setup.spectral_grid['min'], exp_setup.spectral_grid['max'], exp_setup.spectral_grid['n'], endpoint=True)*1e2
         ws.f_grid = ty.physics.wavenumber2frequency(kayser_grid)
     else:
         print('Use a valid option fo which grid to use. Option are frequency, wavelength or kayser.')
