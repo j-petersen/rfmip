@@ -22,9 +22,6 @@ def run_arts_batch(exp_setup, verbosity=2):
     ws.VectorCreate('surface_altitudes')
 
     ## Set Agendas 
-    # Agenda for scalar gas absorption calculation
-    ws.gas_scattering_agenda = gas_scattering_agenda
-
     # cosmic background radiation
     ws.iy_space_agenda = ws.iy_space_agenda__CosmicBackground
 
@@ -95,17 +92,9 @@ def run_arts_batch(exp_setup, verbosity=2):
         basename=f'{exp_setup.arts_data_path}arts-cat-data/xsec/'
     )
 
-    ws.abs_lines_per_speciesSetCutoff(option="ByLine", value=750e9)
-
-    # Throw away lines outside f_grid
-    ws.abs_lines_per_speciesCompact()
-
-    # Set propmat agenda
-    ws.propmat_clearsky_agendaSetAutomatic()
-
     ## Lookup Table
     lut = LookUpTable(exp_setup=exp_setup, ws=ws)
-    lut.calculate()
+    lut.calculate(load_if_exist=True)
 
     ## Surface
     # set surface resolution
