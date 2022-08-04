@@ -15,10 +15,11 @@ class LookUpTable():
         self.ws = ws
 
 
-    def calculate(self):
+    def calculate(self, load_if_exist=False):
         if self.check_existing_lut():
             print("The Lookup Table is already calculated. :)")
-            self.load_lut()
+            if load_if_exist:
+                self.load()
             return
         if self.new_ws:
             print('Necessary quantities are loaded.')
@@ -34,6 +35,7 @@ class LookUpTable():
         self.ws.execute_controlfile("general/planet_earth.arts")
 
         self.f_grid_from_spectral_grid()
+        self.ws.stokes_dim = 1
         self.ws.AtmosphereSet1D()
         self.ws.batch_atm_fields_compact = pyarts.xml.load(f'{self.exp_setup.rfmip_path}{self.exp_setup.input_folder}atm_fields.xml')
         species = pyarts.xml.load(f"{self.exp_setup.rfmip_path}{self.exp_setup.input_folder}species.xml")
@@ -47,14 +49,6 @@ class LookUpTable():
         self.ws.ReadXsecData(
             basename=f'{self.exp_setup.arts_data_path}arts-cat-data/xsec/'
         )
-
-        self.ws.abs_lines_per_speciesSetCutoff(option="ByLine", value=750e9)
-
-        # Throw away lines outside f_grid
-        self.ws.abs_lines_per_speciesCompact()
-
-        self.ws.stokes_dim = 1
-        self.ws.propmat_clearsky_agendaSetAutomatic()
 
 
     def f_grid_from_spectral_grid(self):
@@ -72,20 +66,25 @@ class LookUpTable():
         if not os.path.exists(f'{self.exp_setup.rfmip_path}lookup_tables/{self.exp_setup.name}/'):
             os.mkdir(f'{self.exp_setup.rfmip_path}lookup_tables/{self.exp_setup.name}/')
 
-        self.ws.propmat_clearsky_agendaSetAutomatic()
+        self.ws.propmat_clearsky_agendaAuto()
 
         self.ws.abs_lookupSetupBatch()
         self.ws.lbl_checkedCalc()
         self.ws.abs_lookupCalc()
 
-        self.ws.propmat_clearsky_agendaSetAutomaticForLookup()
+        self.ws.propmat_clearsky_agendaAuto(use_abs_lookup=1)
 
         self.ws.WriteXML('binary', self.ws.abs_lookup, f'{self.exp_setup.rfmip_path}lookup_tables/{self.exp_setup.name}/lookup.xml')
  
 
-    def load_lut(self):
+    def load(self):
         """ Loads existing Lookup table and adjust it for the calculation. """
+        self.ws.propmat_clearsky_agendaAuto()
+
         self.ws.ReadXML(self.ws.abs_lookup, f'{self.exp_setup.rfmip_path}lookup_tables/{self.exp_setup.name}/lookup.xml')
+
+        self.ws.propmat_clearsky_agendaAuto(use_abs_lookup=1)
+
         if not self.new_ws:
             self.ws.abs_lookupAdapt() # Adapts a gas absorption lookup table to the current calculation. Removes unnessesary freqs are species.
     
