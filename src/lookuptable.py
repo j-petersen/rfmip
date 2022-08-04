@@ -15,11 +15,14 @@ class LookUpTable():
         self.ws = ws
 
 
-    def calculate(self):
+    def calculate(self, recalculate=False):
         if self.check_existing_lut():
-            print("The Lookup Table is already calculated. :)")
-            self.load_lut()
-            return
+            if not recalculate:
+                print("The Lookup Table is already calculated. :)")
+                self.load_lut()
+                return
+            print('The Lookuptable will be recalculated.')
+
         if self.new_ws:
             print('Necessary quantities are loaded.')
             self.load_atmospheric_state()
