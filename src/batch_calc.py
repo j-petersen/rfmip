@@ -10,7 +10,6 @@ from lookuptable import LookUpTable
 def run_arts_batch(exp_setup, verbosity=2):
     """Run Arts Calculation for RFMIP. """
     ws = pyarts.workspace.Workspace(verbosity=verbosity)
-    ws.execute_controlfile("general/general.arts")
     ws.execute_controlfile("general/continua.arts")
     ws.execute_controlfile("general/agendas.arts")
     ws.execute_controlfile("general/planet_earth.arts")
@@ -23,23 +22,20 @@ def run_arts_batch(exp_setup, verbosity=2):
     ws.VectorCreate('surface_altitudes')
 
     ## Set Agendas 
-    # Agenda for scalar gas absorption calculation
-    ws.Copy(ws.abs_xsec_agenda, ws.abs_xsec_agenda__noCIA)
-
     # cosmic background radiation
-    ws.Copy(ws.iy_space_agenda, ws.iy_space_agenda__CosmicBackground)
+    ws.iy_space_agenda = ws.iy_space_agenda__CosmicBackground
 
-    ws.Copy(ws.surface_rtprop_agenda, ws.surface_rtprop_agenda__lambertian_ReflFix_SurfTFromt_field)
+    ws.surface_rtprop_agenda = ws.surface_rtprop_agenda__lambertian_ReflFix_SurfTFromt_field
 
     # sensor-only path
-    ws.Copy(ws.ppath_agenda, ws.ppath_agenda__FollowSensorLosPath)
+    ws.ppath_agenda = ws.ppath_agenda__FollowSensorLosPath
 
     # Geometric Ppath (no refraction)
-    ws.Copy(ws.ppath_step_agenda, ws.ppath_step_agenda__GeometricPath)
+    ws.ppath_step_agenda = ws.ppath_step_agenda__GeometricPath
 
     ws.iy_surface_agenda = iy_surface_agenda # egal für disort?
     # standard surface agenda (i.e., make use of surface_rtprop_agenda)
-    # ws.Copy(ws.iy_surface_agenda, ws.iy_surface_agenda__UseSurfaceRtprop)
+    # ws.iy_surface_agenda = ws.iy_surface_agenda__UseSurfaceRtprop
 
     # Number of Stokes components to be computed
     print('setup and reading')
@@ -61,7 +57,7 @@ def run_arts_batch(exp_setup, verbosity=2):
         lam_grid = np.linspace(exp_setup.spectral_grid['min'], exp_setup.spectral_grid['max'], exp_setup.spectral_grid['n'], endpoint=True)*1e-9
         ws.f_grid = ty.physics.wavelength2frequency(lam_grid)[::-1]
     elif exp_setup.which_spectral_grid == 'kayser':
-        kayser_grid = np.linspace(exp_setup.spectral_grid['min'], exp_setup.spectral_grid['max'], exp_setup.spectral_grid['n'], endpoint=True)
+        kayser_grid = np.linspace(exp_setup.spectral_grid['min'], exp_setup.spectral_grid['max'], exp_setup.spectral_grid['n'], endpoint=True)*1e2
         ws.f_grid = ty.physics.wavenumber2frequency(kayser_grid)
     else:
         print('Use a valid option fo which grid to use. Option are frequency, wavelength or kayser.')
@@ -96,17 +92,9 @@ def run_arts_batch(exp_setup, verbosity=2):
         basename=f'{exp_setup.arts_data_path}arts-cat-data/xsec/'
     )
 
-    ws.abs_lines_per_speciesSetCutoff(option="ByLine", value=750e9)
-
-    # Throw away lines outside f_grid
-    ws.abs_lines_per_speciesCompact()
-
-    # Set propmat agenda
-    ws.propmat_clearsky_agendaSetAutomatic()
-
     ## Lookup Table
     lut = LookUpTable(exp_setup=exp_setup, ws=ws)
-    lut.calculate()
+    lut.calculate(load_if_exist=True)
 
     ## Surface
     # set surface resolution
@@ -141,7 +129,6 @@ def run_arts_batch(exp_setup, verbosity=2):
 
     # Check model atmosphere
     ws.scat_data_checkedCalc()
-    ws.abs_xsec_agenda_checkedCalc()
     ws.lbl_checkedCalc()
     ws.sensor_checkedCalc()
 

@@ -81,16 +81,17 @@ def olr_setup():
     exp = ExperimentSetup(
         name='olr',
         description='goal is to reproduce a olr plot',
-        rfmip_path='/Users/jpetersen/rare/rfmip/',
+        rfmip_path='/Users/froemer/Documents/wv_continuum/rfmip/',
         input_folder='input/rfmip/',
-        arts_data_path='/Users/jpetersen/rare/',
+        arts_data_path='/Users/froemer/Documents/',
         solar_type='None',
         which_spectral_grid='kayser',
         spectral_grid={'min': 1, 'max': 2500, 'n': 100},
-        species=['water_vapor', 'ozone', 'carbon_dioxide_GM', 'methane_GM', 'nitrous_oxide_GM'],
+        species=['water_vapor', 'ozone', 'carbon_dioxide_GM', 'nitrous_oxide_GM'],
         angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'}
     )
     exp.save()
+
 
 def solar_angle_dependency_setup():
     exp = ExperimentSetup(

@@ -33,14 +33,11 @@ class LookUpTable():
 
 
     def load_atmospheric_state(self):
-        self.ws.execute_controlfile("general/general.arts")
         self.ws.execute_controlfile("general/agendas.arts")
         self.ws.execute_controlfile("general/planet_earth.arts")
-        self.ws.Copy(self.ws.abs_xsec_agenda, self.ws.abs_xsec_agenda__noCIA)
-        # self.ws.Copy(self.ws.abs_xsec_agenda, self.ws.abs_xsec_agenda__withCIA)
-        # self.ws.Copy(self.ws.abs_xsec_agenda, self.ws.abs_xsec_agenda__withCIAextraT)
 
         self.f_grid_from_spectral_grid()
+        self.ws.stokes_dim = 1
         self.ws.AtmosphereSet1D()
         self.ws.batch_atm_fields_compact = pyarts.xml.load(f'{self.exp_setup.rfmip_path}{self.exp_setup.input_folder}atm_fields.xml')
         species = pyarts.xml.load(f"{self.exp_setup.rfmip_path}{self.exp_setup.input_folder}species.xml")
@@ -55,14 +52,6 @@ class LookUpTable():
             basename=f'{self.exp_setup.arts_data_path}arts-cat-data/xsec/'
         )
 
-        self.ws.abs_lines_per_speciesSetCutoff(option="ByLine", value=750e9)
-
-        # Throw away lines outside f_grid
-        self.ws.abs_lines_per_speciesCompact()
-
-        self.ws.stokes_dim = 1
-        self.ws.propmat_clearsky_agendaSetAutomatic()
-
 
     def f_grid_from_spectral_grid(self):
         if self.exp_setup.which_spectral_grid == 'frequency':  
@@ -71,7 +60,7 @@ class LookUpTable():
             lam_grid = np.linspace(self.exp_setup.spectral_grid['min'], self.exp_setup.spectral_grid['max'], self.exp_setup.spectral_grid['n'], endpoint=True)*1e-9
             self.ws.f_grid = ty.physics.wavelength2frequency(lam_grid)[::-1]
         elif self.exp_setup.which_spectral_grid == 'kayser':
-            kayser_grid = np.linspace(self.exp_setup.spectral_grid['min'], self.exp_setup.spectral_grid['max'], self.exp_setup.spectral_grid['n'], endpoint=True)
+            kayser_grid = np.linspace(self.exp_setup.spectral_grid['min'], self.exp_setup.spectral_grid['max'], self.exp_setup.spectral_grid['n'], endpoint=True)*1e2
             self.ws.f_grid = ty.physics.wavenumber2frequency(kayser_grid)
 
 
@@ -79,17 +68,25 @@ class LookUpTable():
         if not os.path.exists(f'{self.exp_setup.rfmip_path}lookup_tables/{self.exp_setup.name}/'):
             os.mkdir(f'{self.exp_setup.rfmip_path}lookup_tables/{self.exp_setup.name}/')
 
+        self.ws.propmat_clearsky_agendaAuto()
+
         self.ws.abs_lookupSetupBatch()
-        self.ws.abs_xsec_agenda_checkedCalc()
         self.ws.lbl_checkedCalc()
         self.ws.abs_lookupCalc()
+
+        self.ws.propmat_clearsky_agendaAuto(use_abs_lookup=1)
 
         self.ws.WriteXML('binary', self.ws.abs_lookup, f'{self.exp_setup.rfmip_path}lookup_tables/{self.exp_setup.name}/lookup.xml')
  
 
-    def load_lut(self):
+    def load(self):
         """ Loads existing Lookup table and adjust it for the calculation. """
+        self.ws.propmat_clearsky_agendaAuto()
+
         self.ws.ReadXML(self.ws.abs_lookup, f'{self.exp_setup.rfmip_path}lookup_tables/{self.exp_setup.name}/lookup.xml')
+
+        self.ws.propmat_clearsky_agendaAuto(use_abs_lookup=1)
+
         if not self.new_ws:
             self.ws.abs_lookupAdapt() # Adapts a gas absorption lookup table to the current calculation. Removes unnessesary freqs are species.
     
