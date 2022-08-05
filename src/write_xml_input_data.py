@@ -62,12 +62,17 @@ def create_input_data(exp_setup) -> None:
         for i, spec in enumerate(spec_keys):
             if np.shape(data.isel(site=site)[spec].values) == ():
                 arr[i + id_offset, :, 0, 0] = np.tile(
-                    data.isel(site=site)[spec].values, data.dims["layer"]
+                    data.isel(site=site)[spec].values
+                    * np.float64(data.isel(site=site)[spec].attrs["units"]),
+                    data.dims["layer"],
                 ).astype(np.float64)
             else:
                 arr[i + id_offset, :, 0, 0] = (
-                    data.isel(site=site)[spec]
-                    .values.reshape(data.dims["layer"])
+                    (
+                        data.isel(site=site)[spec].values
+                        * np.float64(data.isel(site=site)[spec].attrs["units"])
+                    )
+                    .reshape(data.dims["layer"])
                     .astype(np.float64)
                 )[::-1]
 
@@ -194,7 +199,9 @@ def species_name_mapping() -> dict:
 # https://stackoverflow.com/questions/19513212/can-i-get-the-altitude-with-geopy-in-python-with-longitude-latitude
 def get_elevation(geo_data=None):
     if geo_data is None:
-        geo_data = pyarts.xml.load("/Users/jpetersen/rare/rfmip/input/sensor_pos.xml")
+        geo_data = pyarts.xml.load(
+            "/Users/froemer/Documents/wv_continuum/rfmip/input/sensor_pos.xml"
+        )
 
     geo_str = ""
     for pos in geo_data:
@@ -229,7 +236,8 @@ def scaled_solar_spectrum(exp_setup) -> None:
 
 def main():
     exp_setup = read_exp_setup(
-        exp_name="test", path="/Users/jpetersen/rare/rfmip/experiment_setups/"
+        exp_name="olr",
+        path="/Users/froemer/Documents/wv_continuum/rfmip/experiment_setups/",
     )
     create_input_data(exp_setup=exp_setup)
 
