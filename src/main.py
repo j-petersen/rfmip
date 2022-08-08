@@ -5,7 +5,7 @@ import experiment_setup as setup
 import batch_calc as calc
 import data_processing as post_pro
 import data_visualisation as vis
-from lookuptable import LookUpTable
+from lookuptable import LookUpTable, calc_lookup_parallel
 
 def main():
     # Write experiment setup
@@ -17,9 +17,9 @@ def main():
     print('Create input data')
     input_data.create_input_data(exp_setup)
 
-    # Lookuptable (not yet implemented)
-    lut = LookUpTable(exp_setup=exp_setup)
-    lut.calculate()
+    calc_lookup_parallel(exp_setup, n_procs=8, recalculate=False)
+    # lut = LookUpTable(exp_setup=exp_setup)
+    # lut.calculate()
 
     # Calculation
     print('Calculation')
