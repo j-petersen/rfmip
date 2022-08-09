@@ -43,7 +43,8 @@ def convert_units(exp_setup, spectral_grid, irradiance):
         irradiance, spectral_grid = ty.physics.perfrequency2perwavelength(
             irradiance, f_grid
         )
-        irradiance = irradiance * 1e-9 # convert from per m to per nm
+        irradiance *= 1e-9 # convert from per m to per nm
+        spectral_grid *= 1e9
         
         return spectral_grid, irradiance
 
@@ -54,7 +55,8 @@ def convert_units(exp_setup, spectral_grid, irradiance):
         irradiance, spectral_grid = ty.physics.perfrequency2perwavenumber(
             irradiance, f_grid
         )
-        irradiance = irradiance * 1e2 # convert from per 1/m to per 1/cm
+        irradiance *= 1e2 # convert from per 1/m to per 1/cm
+        spectral_grid *= 1e-2
 
         return spectral_grid, irradiance
 
@@ -157,10 +159,10 @@ def plot_level_spectra(exp_setup):
     )
 
 def main():
-    exp_setup = read_exp_setup(exp_name='olr', path='/Users/froemer/Documents/wv_continuum/rfmip/experiment_setups/')
+    exp_setup = read_exp_setup(exp_name='solar_angle', path='/Users/jpetersen/rare/rfmip/experiment_setups/')
     plot_flux_profiles(exp_setup=exp_setup)
-    plot_olr(exp_setup=exp_setup)
-    plot_level_spectra(exp_setup=exp_setup)
+    # plot_olr(exp_setup=exp_setup)
+    # plot_level_spectra(exp_setup=exp_setup)
 
 
 if __name__ == "__main__":
