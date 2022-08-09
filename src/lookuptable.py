@@ -10,6 +10,12 @@ from experiment_setup import ExperimentSetup
 
 
 def calc_lookup_parallel(exp_setup, n_procs=8, recalculate=False):
+
+    if os.path.exists(f'{exp_setup.rfmip_path}lookup_tables/{exp_setup.name}/lookup.xml'):
+        print("The Lookup Table already exists.")
+        if not recalculate:
+            return
+
     with Pool(n_procs) as p:
         p.starmap(calc_lookup, list(zip(repeat(exp_setup, n_procs), repeat(n_procs, n_procs), list(range(n_procs)), repeat(recalculate))))
 
@@ -50,9 +56,9 @@ class LookUpTable():
     def calculate(self, load_if_exist=False, recalculate=False):
         if self.check_existing_lut():
             if not recalculate:
-                print("The Lookup Table is already calculated. :)")
+                print("The Lookup Table is already calculated.")
                 if load_if_exist:
-                    self.load_lut()
+                    self.load()
                 return
             print('The Lookuptable will be recalculated.')
 
