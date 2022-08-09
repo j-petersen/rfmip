@@ -200,7 +200,7 @@ def species_name_mapping() -> dict:
 def get_elevation(geo_data=None):
     if geo_data is None:
         geo_data = pyarts.xml.load(
-            "/Users/froemer/Documents/wv_continuum/rfmip/input/sensor_pos.xml"
+            "/Users/jpetersen/rare/rfmip/input/sensor_pos.xml"
         )
 
     geo_str = ""
@@ -236,8 +236,7 @@ def scaled_solar_spectrum(exp_setup) -> None:
 
 def main():
     exp_setup = read_exp_setup(
-        exp_name="olr",
-        path="/Users/froemer/Documents/wv_continuum/rfmip/experiment_setups/",
+        exp_name="olr", path="/Users/jpetersen/rare/rfmip/experiment_setups/",
     )
     create_input_data(exp_setup=exp_setup)
 
