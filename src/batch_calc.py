@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from experiment_setup import read_exp_setup
 from lookuptable import LookUpTable
 
-def run_arts_batch(exp_setup, verbosity=2):
+def run_arts_batch(exp_setup, verbosity=3):
     """Run Arts Calculation for RFMIP. """
     ws = pyarts.workspace.Workspace(verbosity=verbosity)
     ws.execute_controlfile("general/continua.arts")
@@ -120,6 +120,7 @@ def run_arts_batch(exp_setup, verbosity=2):
             ws.dobatch_calc_agenda = dobatch_calc_agenda__disort_blackbody
         elif exp_setup.solar_type == 'Spectrum':
             ws.ArrayOfGriddedField2Create('star_spectras')
+            ws.GriddedField2Create('star_spectrum_raw')
             ws.star_spectras = pyarts.xml.load(f'{exp_setup.rfmip_path}{exp_setup.input_folder}star_spectra.xml')
             ws.dobatch_calc_agenda = dobatch_calc_agenda__disort_spectrum
 
@@ -197,7 +198,7 @@ def dobatch_calc_agenda__disort_blackbody(ws):
     ws.MatrixSetConstant(ws.z_surface, 1, 1, ws.z0)
     ws.Extract(ws.solar_zenith_angle, ws.solar_zenith_angles, ws.ybatch_index)
 
-    ws.starBlackbodySimple(distance=1.5e11, latitude=0, longitude=ws.solar_zenith_angle)
+    ws.starsAddSingleBlackbody(longitude=ws.solar_zenith_angle)
 
     # recalcs the atmosphere
     ws.AtmFieldsAndParticleBulkPropFieldFromCompact()
@@ -235,7 +236,7 @@ def dobatch_calc_agenda__disort_spectrum(ws):
     ws.Extract(ws.solar_zenith_angle, ws.solar_zenith_angles, ws.ybatch_index)
     ws.Extract(ws.star_spectrum_raw, ws.star_spectras, ws.ybatch_index)
 
-    ws.starFromGrid(temperature=0, distance=1.5e11, latitude=0, longitude=ws.solar_zenith_angle)
+    ws.starsAddSingleFromGrid(star_spectrum_raw=ws.star_spectrum_raw, temperature=0, longitude=ws.solar_zenith_angle)
 
     # recalcs the atmosphere
     ws.AtmFieldsAndParticleBulkPropFieldFromCompact()
@@ -260,14 +261,8 @@ def dobatch_calc_agenda__disort_spectrum(ws):
 @pyarts.workspace.arts_agenda
 def gas_scattering_agenda(ws):
     ws.Ignore(ws.rtp_vmr)
-    ws.gas_scatteringCoefAirSimple()
-    ws.gas_scatteringMatrixRayleigh()
-
-#Main agenda
-@pyarts.workspace.arts_agenda
-def iy_main_agenda_ClearSky(ws):
-    ws.ppathCalc()
-    ws.iyClearsky()
+    ws.gas_scattering_coefAirSimple()
+    ws.gas_scattering_matRayleigh()
 
 #surface scattering agenda
 @pyarts.workspace.arts_agenda
