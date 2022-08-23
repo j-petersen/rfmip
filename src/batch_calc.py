@@ -5,7 +5,7 @@ import typhon as ty
 import matplotlib.pyplot as plt
 
 from experiment_setup import read_exp_setup
-from lookuptable import LookUpTable
+from lookuptable import BatchLookUpTable
 
 def run_arts_batch(exp_setup, verbosity=3):
     """Run Arts Calculation for RFMIP. """
@@ -93,7 +93,7 @@ def run_arts_batch(exp_setup, verbosity=3):
     )
 
     ## Lookup Table
-    lut = LookUpTable(exp_setup=exp_setup, ws=ws)
+    lut = BatchLookUpTable(exp_setup=exp_setup, ws=ws)
     lut.calculate(load_if_exist=True)
 
     ## Surface
