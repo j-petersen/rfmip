@@ -11,7 +11,7 @@ from experiment_setup import ExperimentSetup
 
 def calc_lookup(exp_setup, recalculate=False):
     lut = BatchLookUpTable(exp_setup)
-    lut.calculate(recalculate=recalculate)
+    lut.calculate(recalculate=recalculate, optimise_speed=True)
 
 class BatchLookUpTable():
     def __init__(self, exp_setup, ws=None):
@@ -23,12 +23,12 @@ class BatchLookUpTable():
         self.ws = ws
 
 
-    def calculate(self, load_if_exist=False, recalculate=False):
+    def calculate(self, load_if_exist=False, recalculate=False, optimise_speed=False):
         if self.check_existing_lut():
             if not recalculate:
                 print("The Lookup Table is already calculated.")
                 if load_if_exist:
-                    self.load()
+                    self.load(optimise_speed=optimise_speed)
                 return
             print('The Lookuptable will be recalculated.')
 
@@ -37,7 +37,7 @@ class BatchLookUpTable():
             self.lut_setup()
         print('The Lookup Table calculation is starting.')
         with ty.utils.Timer():
-            self.calculate_lut()
+            self.calculate_lut(optimise_speed=optimise_speed)
         print('Finished with Lookup Table calculation.')
 
 
@@ -53,7 +53,7 @@ class BatchLookUpTable():
         self.add_species(species)
 
 
-    def calculate_lut(self):
+    def calculate_lut(self, optimise_speed=False):
         if not os.path.exists(f'{self.exp_setup.rfmip_path}lookup_tables/{self.exp_setup.name}/'):
             os.mkdir(f'{self.exp_setup.rfmip_path}lookup_tables/{self.exp_setup.name}/')
 
@@ -66,8 +66,9 @@ class BatchLookUpTable():
             basename=f'{self.exp_setup.arts_data_path}arts-cat-data/xsec/'
         )
 
-        self.ws.abs_lines_per_speciesCutoff(option='ByLine', value=750e9)
-        self.ws.abs_lines_per_speciesCompact()
+        if optimise_speed:
+            self.ws.abs_lines_per_speciesCutoff(option='ByLine', value=750e9)
+            self.ws.abs_lines_per_speciesCompact()
 
         self.ws.propmat_clearsky_agendaAuto()
 
@@ -80,8 +81,13 @@ class BatchLookUpTable():
         self.ws.WriteXML('binary', self.ws.abs_lookup, f'{self.exp_setup.rfmip_path}lookup_tables/{self.exp_setup.name}/lookup.xml')
 
 
-    def load(self):
+    def load(self, optimise_speed=False):
         """ Loads existing Lookup table and adjust it for the calculation. """
+        self.ws.Touch(self.ws.abs_lines_per_species)
+        if optimise_speed:
+            self.ws.abs_lines_per_speciesCutoff(option="ByLine", value=750e9)
+            self.ws.abs_lines_per_speciesCompact()
+
         self.ws.propmat_clearsky_agendaAuto()
 
         self.ws.ReadXML(self.ws.abs_lookup, f'{self.exp_setup.rfmip_path}lookup_tables/{self.exp_setup.name}/lookup.xml')
@@ -90,6 +96,9 @@ class BatchLookUpTable():
 
         if not self.new_ws:
             self.ws.abs_lookupAdapt() # Adapts a gas absorption lookup table to the current calculation. Removes unnessesary freqs are species.
+
+        self.ws.lbl_checked = 1
+
 
 
     def f_grid_from_spectral_grid(self):

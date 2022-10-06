@@ -5,14 +5,15 @@ import typhon as ty
 import matplotlib.pyplot as plt
 
 from experiment_setup import read_exp_setup
-from lookuptable import BatchLookUpTable
+from batch_lookuptable import BatchLookUpTable
 
 def run_arts_batch(exp_setup, verbosity=3):
     """Run Arts Calculation for RFMIP. """
+
     ws = pyarts.workspace.Workspace(verbosity=verbosity)
-    ws.execute_controlfile("general/continua.arts")
-    ws.execute_controlfile("general/agendas.arts")
-    ws.execute_controlfile("general/planet_earth.arts")
+    
+    ws.LegacyContinuaInit()
+    ws.PlanetSet(option="Earth")
 
     ws.NumericCreate('z0')
     ws.NumericCreate('surface_reflectivity_numeric')
@@ -21,28 +22,9 @@ def run_arts_batch(exp_setup, verbosity=3):
     ws.VectorCreate('surface_reflectivities')
     ws.VectorCreate('surface_altitudes')
 
-    ## Set Agendas 
-    # cosmic background radiation
-    ws.iy_space_agenda = ws.iy_space_agenda__CosmicBackground
-
-    ws.surface_rtprop_agenda = ws.surface_rtprop_agenda__lambertian_ReflFix_SurfTFromt_field
-
-    # sensor-only path
-    ws.ppath_agenda = ws.ppath_agenda__FollowSensorLosPath
-
-    # Geometric Ppath (no refraction)
-    ws.ppath_step_agenda = ws.ppath_step_agenda__GeometricPath
-
-    ws.iy_surface_agenda = iy_surface_agenda # egal für disort?
-    # standard surface agenda (i.e., make use of surface_rtprop_agenda)
-    # ws.iy_surface_agenda = ws.iy_surface_agenda__UseSurfaceRtprop
-
     # Number of Stokes components to be computed
     print('setup and reading')
     ws.stokes_dim = 1
-
-    # Reference ellipsoid
-    ws.refellipsoidEarth(ws.refellipsoid, "Sphere")
 
     # No jacobian calculation
     ws.jacobianOff()
@@ -81,20 +63,11 @@ def run_arts_batch(exp_setup, verbosity=3):
     ws.batch_atm_fields_compact = pyarts.xml.load(f'{exp_setup.rfmip_path}{exp_setup.input_folder}atm_fields.xml')
 
     species = pyarts.xml.load(f"{exp_setup.rfmip_path}{exp_setup.input_folder}species.xml")
-    ws = add_species(ws, species)
-
-    # Read a line file and a matching small frequency grid
-    ws.abs_lines_per_speciesReadSpeciesSplitCatalog(
-       basename=f'{exp_setup.arts_data_path}arts-cat-data/lines/'
-    )
-
-    ws.ReadXsecData(
-        basename=f'{exp_setup.arts_data_path}arts-cat-data/xsec/'
-    )
+    add_species(ws, species)
 
     ## Lookup Table
     lut = BatchLookUpTable(exp_setup=exp_setup, ws=ws)
-    lut.calculate(load_if_exist=True)
+    lut.calculate(load_if_exist=True, optimise_speed=True)
 
     ## Surface
     # set surface resolution
@@ -130,7 +103,6 @@ def run_arts_batch(exp_setup, verbosity=3):
 
     # Check model atmosphere
     ws.scat_data_checkedCalc()
-    ws.lbl_checkedCalc()
     ws.sensor_checkedCalc()
 
     ws.ybatch_start = 0
@@ -140,7 +112,6 @@ def run_arts_batch(exp_setup, verbosity=3):
         print('starting calculation')
         ws.DOBatchCalc()
 
-    # irrad = np.squeeze(ws.dobatch_spectral_irradiance_field.value)
     if not os.path.exists(f'{exp_setup.rfmip_path}output/{exp_setup.name}/'):
         os.mkdir(f'{exp_setup.rfmip_path}output/{exp_setup.name}/')
     
@@ -173,7 +144,7 @@ def dobatch_calc_agenda__disort(ws):
     ws.propmat_clearsky_agenda_checkedCalc()
 
     # Calculation
-    ws.DisortCalcClearSky(nstreams=6, quiet=0)
+    ws.DisortCalcClearsky(nstreams=6, quiet=0)
     ws.spectral_irradiance_fieldFromSpectralRadianceField()
 
     # free fields
@@ -210,7 +181,7 @@ def dobatch_calc_agenda__disort_blackbody(ws):
     ws.propmat_clearsky_agenda_checkedCalc()
 
     # Calculation
-    ws.DisortCalcClearSky(nstreams=6, quiet=0)
+    ws.DisortCalcClearsky(nstreams=6, quiet=0)
     ws.spectral_irradiance_fieldFromSpectralRadianceField()
 
     # free fields
@@ -248,7 +219,7 @@ def dobatch_calc_agenda__disort_spectrum(ws):
     ws.propmat_clearsky_agenda_checkedCalc()
 
     # Calculation
-    ws.DisortCalcClearSky(nstreams=6, quiet=0)
+    ws.DisortCalcClearsky(nstreams=6, quiet=0)
     ws.spectral_irradiance_fieldFromSpectralRadianceField()
 
     # free fields
@@ -265,25 +236,24 @@ def gas_scattering_agenda(ws):
     ws.gas_scattering_matRayleigh()
 
 #surface scattering agenda
-@pyarts.workspace.arts_agenda
-def iy_surface_agenda(ws):
+# @pyarts.workspace.arts_agenda
+# def iy_surface_agenda(ws):
 
-    ws.Ignore(ws.iy_transmittance)
-    ws.Ignore(ws.iy_id)
-    ws.Ignore(ws.iy_main_agenda)
-    ws.Ignore(ws.rtp_los)
-    ws.Ignore(ws.rte_pos2)
-    ws.Ignore(ws.diy_dx)
-    ws.Touch(ws.diy_dx)
+#     ws.Ignore(ws.iy_transmittance)
+#     ws.Ignore(ws.iy_id)
+#     ws.Ignore(ws.iy_main_agenda)
+#     ws.Ignore(ws.rtp_los)
+#     ws.Ignore(ws.rte_pos2)
+#     ws.Touch(ws.diy_dx)
 
-    ws.iySurfaceInit()
-    ws.Ignore(ws.dsurface_rmatrix_dx)
-    ws.Ignore(ws.dsurface_emission_dx)
-    ws.Ignore(ws.surface_props_data)
-    ws.Ignore(ws.dsurface_names)
+#     ws.iySurfaceInit()
+#     ws.Ignore(ws.dsurface_rmatrix_dx)
+#     ws.Ignore(ws.dsurface_emission_dx)
+#     ws.Ignore(ws.surface_props_data)
+#     ws.Ignore(ws.dsurface_names)
 
-    # ws.iySurfaceLambertian()
-    ws.iySurfaceLambertianDirect()
+#     # ws.iySurfaceLambertian()
+#     ws.iySurfaceLambertianDirect()
 
 
 def add_species(ws, species):
@@ -303,7 +273,6 @@ def add_species(ws, species):
     species = [spec[12:] for spec in species]
     
     ws.abs_speciesSet(species=species)
-    return ws
 
 
 def replace_values(list_to_replace, item_to_replace, item_to_replace_with):
