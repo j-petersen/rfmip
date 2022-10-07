@@ -112,12 +112,12 @@ def rfmip_setup():
     exp = ExperimentSetup(
         name='rfmip',
         description='rfmip',
-        rfmip_path='/Users/jpetersen/rare/rfmip/',
+        rfmip_path='/work/um0878/users/jpetersen/rfmip/',
         input_folder='input/rfmip/',
-        arts_data_path='/Users/jpetersen/rare/',
+        arts_data_path='/work/um0878/users/jpetersen/',
         solar_type='Spectrum',
         which_spectral_grid='wavelength',
-        spectral_grid={'min': 200, 'max': 2_500, 'n': 800},
+        spectral_grid={'min': 115.5, 'max': 9_999.5, 'n': 2**15},
         species=['all'],
         angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'}
     )

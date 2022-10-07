@@ -5,21 +5,19 @@ import experiment_setup as setup
 import batch_calc as calc
 import data_processing as post_pro
 import data_visualisation as vis
-from lookuptable import BatchLookUpTable, calc_lookup_parallel
+from lookuptable import BatchLookUpTable
 
 def main():
     # Write experiment setup
-    # setup.new_test_setup()
-    setup.solar_angle_dependency_setup()
-    exp_setup = setup.read_exp_setup(exp_name='solar_angle', path='/Users/jpetersen/rare/rfmip/experiment_setups/')
+    setup.rfmip_setup()
+    exp_setup = setup.read_exp_setup(exp_name='rfmip', path='/work/um0878/users/jpetersen/rfmip/experiment_setups/')
     
     # Create input data
     print('Create input data')
     input_data.create_input_data(exp_setup)
 
-    calc_lookup_parallel(exp_setup, n_procs=8, recalculate=False)
-    # lut = BatchLookUpTable(exp_setup=exp_setup)
-    # lut.calculate()
+    lut = BatchLookUpTable(exp_setup=exp_setup)
+    lut.calculate()
 
     # Calculation
     print('Calculation')
