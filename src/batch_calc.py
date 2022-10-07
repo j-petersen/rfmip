@@ -29,9 +29,6 @@ def run_arts_batch(exp_setup, verbosity=3):
     # No jacobian calculation
     ws.jacobianOff()
 
-    # Clearsky = No scattering
-    ws.cloudboxOff()
-
     # Frequency grid
     if exp_setup.which_spectral_grid == 'frequency':  
         ws.f_grid = np.linspace(exp_setup.spectral_grid['min'], exp_setup.spectral_grid['max'], exp_setup.spectral_grid['n'], endpoint=True)
@@ -84,7 +81,7 @@ def run_arts_batch(exp_setup, verbosity=3):
         ws.dobatch_calc_agenda = dobatch_calc_agenda__disort
     else:
         ws.gas_scattering_do = 1
-        ws.gas_scattering_agenda = gas_scattering_agenda
+        ws.gas_scattering_agenda = gas_scattering_agenda__Rayleigh
         ws.NumericCreate('solar_zenith_angle')
         ws.VectorCreate('solar_zenith_angles')
         ws.solar_zenith_angles = pyarts.xml.load(f'{exp_setup.rfmip_path}{exp_setup.input_folder}solar_zenith_angle.xml')
@@ -101,8 +98,6 @@ def run_arts_batch(exp_setup, verbosity=3):
     ws.AngularGridsSetFluxCalc(N_za_grid=exp_setup.angular_grid['N_za_grid'], N_aa_grid=exp_setup.angular_grid['N_aa_grid'], za_grid_type=exp_setup.angular_grid['za_grid_type'])
     ws.aa_grid.value += 180. # disort goes from 0 t0 360 
 
-    # Check model atmosphere
-    ws.scat_data_checkedCalc()
     ws.sensor_checkedCalc()
 
     ws.ybatch_start = 0
@@ -137,20 +132,25 @@ def dobatch_calc_agenda__disort(ws):
     # recalcs the atmosphere
     ws.AtmFieldsAndParticleBulkPropFieldFromCompact()
 
+    # set partical scattering
+    ws.cloudboxSetFullAtm()
+    ws.Touch(ws.scat_data)
+    ws.pnd_fieldZero()
+
     # Checks 
     ws.atmgeom_checkedCalc()
     ws.atmfields_checkedCalc()
-    ws.cloudbox_checkedCalc()
+    ws.scat_data_checkedCalc()
     ws.propmat_clearsky_agenda_checkedCalc()
 
     # Calculation
-    ws.DisortCalcClearsky(nstreams=6, quiet=0)
-    ws.spectral_irradiance_fieldFromSpectralRadianceField()
+    ws.DisortCalcIrradiance(nstreams=10, quiet=0)
 
     # free fields
-    ws.Tensor5SetConstant(ws.radiance_field, 0, 0, 0, 0, 0, 0.)
-    ws.Tensor4SetConstant(ws.irradiance_field, 0, 0, 0, 0, 0.)
-    ws.Tensor7SetConstant(ws.cloudbox_field, 0, 0, 0, 0, 0, 0, 0, 0.)
+    ws.Touch(ws.spectral_radiance_field)
+    ws.Touch(ws.radiance_field)
+    ws.Touch(ws.cloudbox_field)
+    ws.Touch(ws.irradiance_field)
 
 
 @pyarts.workspace.arts_agenda(allow_callbacks=False)
@@ -174,20 +174,25 @@ def dobatch_calc_agenda__disort_blackbody(ws):
     # recalcs the atmosphere
     ws.AtmFieldsAndParticleBulkPropFieldFromCompact()
 
+    # set partical scattering
+    ws.cloudboxSetFullAtm()
+    ws.Touch(ws.scat_data)
+    ws.pnd_fieldZero()
+
     # Checks 
     ws.atmgeom_checkedCalc()
     ws.atmfields_checkedCalc()
-    ws.cloudbox_checkedCalc()
+    ws.scat_data_checkedCalc()
     ws.propmat_clearsky_agenda_checkedCalc()
 
     # Calculation
-    ws.DisortCalcClearsky(nstreams=6, quiet=0)
-    ws.spectral_irradiance_fieldFromSpectralRadianceField()
+    ws.DisortCalcIrradiance(nstreams=10, quiet=0)
 
     # free fields
-    ws.Tensor5SetConstant(ws.radiance_field, 0, 0, 0, 0, 0, 0.)
-    ws.Tensor4SetConstant(ws.irradiance_field, 0, 0, 0, 0, 0.)
-    ws.Tensor7SetConstant(ws.cloudbox_field, 0, 0, 0, 0, 0, 0, 0, 0.)
+    ws.Touch(ws.spectral_radiance_field)
+    ws.Touch(ws.radiance_field)
+    ws.Touch(ws.cloudbox_field)
+    ws.Touch(ws.irradiance_field)
 
 
 @pyarts.workspace.arts_agenda(allow_callbacks=False)
@@ -212,48 +217,33 @@ def dobatch_calc_agenda__disort_spectrum(ws):
     # recalcs the atmosphere
     ws.AtmFieldsAndParticleBulkPropFieldFromCompact()
 
+    # set partical scattering
+    ws.cloudboxSetFullAtm()
+    ws.Touch(ws.scat_data)
+    ws.pnd_fieldZero()
+
     # Checks 
     ws.atmgeom_checkedCalc()
     ws.atmfields_checkedCalc()
-    ws.cloudbox_checkedCalc()
+    ws.scat_data_checkedCalc()
     ws.propmat_clearsky_agenda_checkedCalc()
 
     # Calculation
-    ws.DisortCalcClearsky(nstreams=6, quiet=0)
-    ws.spectral_irradiance_fieldFromSpectralRadianceField()
+    ws.DisortCalcIrradiance(nstreams=10, quiet=0)
 
     # free fields
-    ws.Tensor5SetConstant(ws.radiance_field, 0, 0, 0, 0, 0, 0.)
-    ws.Tensor4SetConstant(ws.irradiance_field, 0, 0, 0, 0, 0.)
-    ws.Tensor7SetConstant(ws.cloudbox_field, 0, 0, 0, 0, 0, 0, 0, 0.)
+    ws.Touch(ws.spectral_radiance_field)
+    ws.Touch(ws.radiance_field)
+    ws.Touch(ws.cloudbox_field)
+    ws.Touch(ws.irradiance_field)
     
 
 #gas scattering agenda
 @pyarts.workspace.arts_agenda
-def gas_scattering_agenda(ws):
+def gas_scattering_agenda__Rayleigh(ws):
     ws.Ignore(ws.rtp_vmr)
     ws.gas_scattering_coefAirSimple()
     ws.gas_scattering_matRayleigh()
-
-#surface scattering agenda
-# @pyarts.workspace.arts_agenda
-# def iy_surface_agenda(ws):
-
-#     ws.Ignore(ws.iy_transmittance)
-#     ws.Ignore(ws.iy_id)
-#     ws.Ignore(ws.iy_main_agenda)
-#     ws.Ignore(ws.rtp_los)
-#     ws.Ignore(ws.rte_pos2)
-#     ws.Touch(ws.diy_dx)
-
-#     ws.iySurfaceInit()
-#     ws.Ignore(ws.dsurface_rmatrix_dx)
-#     ws.Ignore(ws.dsurface_emission_dx)
-#     ws.Ignore(ws.surface_props_data)
-#     ws.Ignore(ws.dsurface_names)
-
-#     # ws.iySurfaceLambertian()
-#     ws.iySurfaceLambertianDirect()
 
 
 def add_species(ws, species):
