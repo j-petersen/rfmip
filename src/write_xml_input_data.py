@@ -215,7 +215,7 @@ def get_elevation(geo_data=None):
 
 def scaled_solar_spectrum(exp_setup) -> None:
     total_solar_irradiances = pyarts.xml.load(f"{exp_setup.rfmip_path}{exp_setup.input_folder}total_solar_irradiance.xml")
-    gf2 = pyarts.xml.load(f"{exp_setup.arts_data_path}arts-xml-data/star/Sun/solar_spectrum.xml")
+    gf2 = pyarts.xml.load(f"{exp_setup.arts_data_path}arts-xml-data/star/Sun/solar_spectrum_May_2004.xml")
     arr_gf2 = pyarts.arts.ArrayOfGriddedField2()
 
     sigma = 5.670375419e-8
