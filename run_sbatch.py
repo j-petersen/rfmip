@@ -20,7 +20,7 @@ def run_experiments(exp_setup):
         
         command = f"python3 src/main.py {exp}"
         shell_command = (
-            f"{SBATCHSCRIPT} {PARTITION} {JOBNAME} {NCORES} {TIMELIMIT} {command}"
+            f"{SBATCHSCRIPT} {PARTITION} arts_{exp} {NCORES} {TIMELIMIT} {command}"
         )
         print(f"{shell_command=}")
         os.system(command=shell_command)
@@ -38,7 +38,7 @@ def calc_luts(exp_setup):
         
         command = f"python3 src/batch_lookuptable.py {exp}"
         shell_command = (
-            f"{SBATCHSCRIPT} {PARTITION} {JOBNAME} {NCORES} {TIMELIMIT} {command}"
+            f"{SBATCHSCRIPT} {PARTITION} lut_{exp} {NCORES} {TIMELIMIT} {command}"
         )
         print(f"{shell_command=}")
         os.system(command=shell_command)
