@@ -1,5 +1,11 @@
+*/__pycache__/
+.DS_Store
 input/*
 output/*
+*.nc
+*.xml
+*.xml.bin
 *.pyc
 *.png
 lookup_tables/*
+plots/
