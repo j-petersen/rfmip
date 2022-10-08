@@ -15,6 +15,8 @@ def run_arts_batch(exp_setup, verbosity=3):
     ws.LegacyContinuaInit()
     ws.PlanetSet(option="Earth")
 
+    ws.IndexCreate('planck_emission')
+
     ws.NumericCreate('z0')
     ws.NumericCreate('surface_reflectivity_numeric')
 
@@ -94,6 +96,10 @@ def run_arts_batch(exp_setup, verbosity=3):
             ws.star_spectras = pyarts.xml.load(f'{exp_setup.rfmip_path}{exp_setup.input_folder}star_spectra.xml')
             ws.dobatch_calc_agenda = dobatch_calc_agenda__disort_spectrum
 
+
+    # set planck emission
+    ws.planck_emission = int(exp_setup.planck_emission)
+
     # set angular grid
     ws.AngularGridsSetFluxCalc(N_za_grid=exp_setup.angular_grid['N_za_grid'], N_aa_grid=exp_setup.angular_grid['N_aa_grid'], za_grid_type=exp_setup.angular_grid['za_grid_type'])
     ws.aa_grid.value += 180. # disort goes from 0 t0 360 
@@ -144,7 +150,7 @@ def dobatch_calc_agenda__disort(ws):
     ws.propmat_clearsky_agenda_checkedCalc()
 
     # Calculation
-    ws.DisortCalcIrradiance(nstreams=10, quiet=0)
+    ws.DisortCalcIrradiance(nstreams=10, quiet=0, emission=ws.planck_emission)
 
     # free fields
     ws.Touch(ws.spectral_radiance_field)
@@ -186,7 +192,7 @@ def dobatch_calc_agenda__disort_blackbody(ws):
     ws.propmat_clearsky_agenda_checkedCalc()
 
     # Calculation
-    ws.DisortCalcIrradiance(nstreams=10, quiet=0)
+    ws.DisortCalcIrradiance(nstreams=10, quiet=0, emission=ws.planck_emission)
 
     # free fields
     ws.Touch(ws.spectral_radiance_field)
@@ -229,7 +235,7 @@ def dobatch_calc_agenda__disort_spectrum(ws):
     ws.propmat_clearsky_agenda_checkedCalc()
 
     # Calculation
-    ws.DisortCalcIrradiance(nstreams=10, quiet=0)
+    ws.DisortCalcIrradiance(nstreams=10, quiet=0, emission=ws.planck_emission)
 
     # free fields
     ws.Touch(ws.spectral_radiance_field)
@@ -270,7 +276,7 @@ def replace_values(list_to_replace, item_to_replace, item_to_replace_with):
 
 
 def main():
-    exp = read_exp_setup(exp_name='solar_angle', path='/Users/jpetersen/rare/rfmip/experiment_setups/')
+    exp = read_exp_setup(exp_name='test', path='/Users/jpetersen/rare/rfmip/experiment_setups/')
     print(exp)
     run_arts_batch(exp)
 

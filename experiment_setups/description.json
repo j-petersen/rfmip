@@ -1,0 +1,25 @@
+{
+ "name": "description",
+ "description": "This is the discription of the Experiment Setup class variables.",
+ "which_spectral_grid": "give the unit for the f_grid. Options are frequency, wavelength or kayser",
+ "spectral_grid": {
+  "min": "minimum of spectral grid",
+  "max": "minimum of spectral grid",
+  "n": "number of spectral grid points"
+ },
+ "species": [
+  "select species used for calculation. Select [\"all\"] to use all species defined in rfmip."
+ ],
+ "rfmip_path": "path to the rfmip directory.",
+ "input_folder": "relative path from the rfmip dir to the input data for the run.",
+ "arts_data_path": "Path to the directory where arts cat (arts-cat-data) and xml (arts-xml-data) data are.",
+ "lookuptable": "Name of the lookuptable for the calculation",
+ "solar_type": "Chose the type of the star. Options are: None, BlackBody, Spectrum, White",
+ "planck_emission": "Toggle planck emission on (set 1) or off (set 0)",
+ "angular_grid": {
+  "N_za_grid": "Number of zenith angles: recommended 20",
+  "N_aa_grid": "Number of azimuth angles: recommended 41",
+  "za_grid_type": "Zenith angle grid type: linear, linear_mu or double_gauss"
+ },
+ "savename": "/Users/jpetersen/rare/rfmip/experiment_setups/description.json"
+}

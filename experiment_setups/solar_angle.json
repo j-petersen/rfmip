@@ -1,28 +1,29 @@
 {
- "name": "test",
- "description": "simple test case",
+ "name": "solar_angle",
+ "description": "Test to investigate the dependency of the solar angle",
  "which_spectral_grid": "wavelength",
  "spectral_grid": {
   "min": 380,
   "max": 780,
-  "n": 21
+  "n": 12
  },
  "species": [
   "water_vapor",
   "ozone",
   "carbon_dioxide_GM",
+  "methane_GM",
   "nitrous_oxide_GM"
  ],
  "rfmip_path": "/Users/jpetersen/rare/rfmip/",
- "input_folder": "input/rfmip/",
+ "input_folder": "input/solar_angle/",
  "arts_data_path": "/Users/jpetersen/rare/",
- "lookuptable": "test.xml",
- "solar_type": "BlackBody",
+ "lookuptable": "solar_angle.xml",
+ "solar_type": "Spectrum",
  "planck_emission": "1",
  "angular_grid": {
   "N_za_grid": 20,
   "N_aa_grid": 41,
   "za_grid_type": "linear_mu"
  },
- "savename": "/Users/jpetersen/rare/rfmip/experiment_setups/test.json"
+ "savename": "/Users/jpetersen/rare/rfmip/experiment_setups/solar_angle.json"
 }

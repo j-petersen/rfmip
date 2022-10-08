@@ -1,28 +1,25 @@
 {
- "name": "test",
- "description": "simple test case",
+ "name": "testing_rfmip",
+ "description": "local testing case for rfmip",
  "which_spectral_grid": "wavelength",
  "spectral_grid": {
-  "min": 380,
-  "max": 780,
-  "n": 21
+  "min": 115.5,
+  "max": 9999.5,
+  "n": 1024
  },
  "species": [
-  "water_vapor",
-  "ozone",
-  "carbon_dioxide_GM",
-  "nitrous_oxide_GM"
+  "all"
  ],
  "rfmip_path": "/Users/jpetersen/rare/rfmip/",
  "input_folder": "input/rfmip/",
  "arts_data_path": "/Users/jpetersen/rare/",
- "lookuptable": "test.xml",
- "solar_type": "BlackBody",
+ "lookuptable": "test_rfmip.xml",
+ "solar_type": "Spectrum",
  "planck_emission": "1",
  "angular_grid": {
   "N_za_grid": 20,
   "N_aa_grid": 41,
   "za_grid_type": "linear_mu"
  },
- "savename": "/Users/jpetersen/rare/rfmip/experiment_setups/test.json"
+ "savename": "/Users/jpetersen/rare/rfmip/experiment_setups/testing_rfmip.json"
 }

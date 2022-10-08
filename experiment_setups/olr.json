@@ -1,11 +1,11 @@
 {
- "name": "test",
- "description": "simple test case",
- "which_spectral_grid": "wavelength",
+ "name": "olr",
+ "description": "goal is to reproduce a olr plot",
+ "which_spectral_grid": "kayser",
  "spectral_grid": {
-  "min": 380,
-  "max": 780,
-  "n": 21
+  "min": 1,
+  "max": 2500,
+  "n": 100
  },
  "species": [
   "water_vapor",
@@ -14,15 +14,15 @@
   "nitrous_oxide_GM"
  ],
  "rfmip_path": "/Users/jpetersen/rare/rfmip/",
- "input_folder": "input/rfmip/",
+ "input_folder": "input/olr/",
  "arts_data_path": "/Users/jpetersen/rare/",
- "lookuptable": "test.xml",
- "solar_type": "BlackBody",
+ "lookuptable": "olr.xml",
+ "solar_type": "None",
  "planck_emission": "1",
  "angular_grid": {
   "N_za_grid": 20,
   "N_aa_grid": 41,
   "za_grid_type": "linear_mu"
  },
- "savename": "/Users/jpetersen/rare/rfmip/experiment_setups/test.json"
+ "savename": "/Users/jpetersen/rare/rfmip/experiment_setups/olr.json"
 }

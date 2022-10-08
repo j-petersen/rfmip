@@ -1,4 +1,5 @@
 """ This file includes the class and methods to read and write experiment setups. """
+import os
 import numpy as np
 import dataclasses, json
 
@@ -14,12 +15,17 @@ class ExperimentSetup:
     rfmip_path: str
     input_folder: str
     arts_data_path: str
+    lookuptable: str
     solar_type: str
+    planck_emission: str
     angular_grid: dict
     savename: str = '' #dataclasses.field(init=False)
 
     def __post_init__(self):
-        self.savename = f'{self.rfmip_path}experiment_setups/{self.name}.json'
+        path = f'{os.getcwd()}/experiment_setups/'
+        if not os.path.exists(path):
+            raise FileNotFoundError
+        self.savename = f'{path}{self.name}.json'
 
     def __repr__(self):
         out_str = 'ExperimentSetup:\n'
@@ -52,7 +58,9 @@ def exp_setup_description():
         rfmip_path='path to the rfmip directory.',
         input_folder='relative path from the rfmip dir to the input data for the run.',
         arts_data_path='Path to the directory where arts cat (arts-cat-data) and xml (arts-xml-data) data are.',
+        lookuptable='Name of the lookuptable for the calculation',
         solar_type='Chose the type of the star. Options are: None, BlackBody, Spectrum, White',
+        planck_emission='Toggle planck emission on (set 1) or off (set 0)',
         which_spectral_grid='give the unit for the f_grid. Options are frequency, wavelength or kayser',
         spectral_grid={'min': 'minimum of spectral grid', 'max': 'minimum of spectral grid', 'n': 'number of spectral grid points'},
         species=['select species used for calculation. Select ["all"] to use all species defined in rfmip.'],
@@ -60,18 +68,36 @@ def exp_setup_description():
     )
     dis.save()
     
-
-def new_test_setup():
+def test_setup():
     exp = ExperimentSetup(
         name='test',
-        description='this is a test',
+        description='simple test case',
         rfmip_path='/Users/jpetersen/rare/rfmip/',
         input_folder='input/rfmip/',
         arts_data_path='/Users/jpetersen/rare/',
+        lookuptable='test.xml',
         solar_type='BlackBody',
+        planck_emission='1',
         which_spectral_grid='wavelength',
-        spectral_grid={'min': 380, 'max': 780, 'n': 12},
-        species=['water_vapor', 'ozone', 'carbon_dioxide_GM', 'methane_GM', 'nitrous_oxide_GM'],
+        spectral_grid={'min': 380, 'max': 780, 'n': 21},
+        species=['water_vapor', 'ozone', 'carbon_dioxide_GM', 'nitrous_oxide_GM'],
+        angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'}
+    )
+    exp.save()
+
+def testing_rfmip_setup():
+    exp = ExperimentSetup(
+        name='testing_rfmip',
+        description='local testing case for rfmip',
+        rfmip_path='/Users/jpetersen/rare/rfmip/',
+        input_folder='input/rfmip/',
+        arts_data_path='/Users/jpetersen/rare/',
+        lookuptable='test_rfmip.xml',
+        solar_type='Spectrum',
+        planck_emission='1',
+        which_spectral_grid='wavelength',
+        spectral_grid={'min': 115.5, 'max': 9_999.5, 'n': 2**10},
+        species=['all'],
         angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'}
     )
     exp.save()
@@ -81,17 +107,18 @@ def olr_setup():
     exp = ExperimentSetup(
         name='olr',
         description='goal is to reproduce a olr plot',
-        rfmip_path='/Users/froemer/Documents/wv_continuum/rfmip/',
-        input_folder='input/rfmip/',
-        arts_data_path='/Users/froemer/Documents/',
+        rfmip_path='/Users/jpetersen/rare/rfmip/',
+        input_folder='input/olr/',
+        arts_data_path='/Users/jpetersen/rare/',
+        lookuptable='olr.xml',
         solar_type='None',
+        planck_emission='1',
         which_spectral_grid='kayser',
         spectral_grid={'min': 1, 'max': 2500, 'n': 100},
         species=['water_vapor', 'ozone', 'carbon_dioxide_GM', 'nitrous_oxide_GM'],
         angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'}
     )
     exp.save()
-
 
 def solar_angle_dependency_setup():
     exp = ExperimentSetup(
@@ -100,7 +127,9 @@ def solar_angle_dependency_setup():
         rfmip_path='/Users/jpetersen/rare/rfmip/',
         input_folder='input/solar_angle/',
         arts_data_path='/Users/jpetersen/rare/',
+        lookuptable='solar_angle.xml',
         solar_type='Spectrum',
+        planck_emission='1',
         which_spectral_grid='wavelength',
         spectral_grid={'min': 380, 'max': 780, 'n': 12},
         species=['water_vapor', 'ozone', 'carbon_dioxide_GM', 'methane_GM', 'nitrous_oxide_GM'],
@@ -115,7 +144,9 @@ def rfmip_setup():
         rfmip_path='/work/um0878/users/jpetersen/rfmip/',
         input_folder='input/rfmip/',
         arts_data_path='/work/um0878/users/jpetersen/',
+        lookuptable='rfmip.xml',
         solar_type='Spectrum',
+        planck_emission='1',
         which_spectral_grid='wavelength',
         spectral_grid={'min': 115.5, 'max': 9_999.5, 'n': 2**15},
         species=['all'],
@@ -124,8 +155,9 @@ def rfmip_setup():
     exp.save()
 
 def main():
-    new_test_setup()
-    # exp_setup_description()
+    exp_setup_description()
+    test_setup()
+    testing_rfmip_setup()
     olr_setup()
     solar_angle_dependency_setup()
     rfmip_setup()

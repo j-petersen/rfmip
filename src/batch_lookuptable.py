@@ -54,9 +54,6 @@ class BatchLookUpTable():
 
 
     def calculate_lut(self, optimise_speed=False):
-        if not os.path.exists(f'{self.exp_setup.rfmip_path}lookup_tables/{self.exp_setup.name}/'):
-            os.mkdir(f'{self.exp_setup.rfmip_path}lookup_tables/{self.exp_setup.name}/')
-
         # Read a line file and a matching small frequency grid
         self.ws.abs_lines_per_speciesReadSpeciesSplitCatalog(
         basename=f'{self.exp_setup.arts_data_path}arts-cat-data/lines/'
@@ -78,7 +75,7 @@ class BatchLookUpTable():
 
         self.ws.propmat_clearsky_agendaAuto(use_abs_lookup=1)
 
-        self.ws.WriteXML('binary', self.ws.abs_lookup, f'{self.exp_setup.rfmip_path}lookup_tables/{self.exp_setup.name}/lookup.xml')
+        self.ws.WriteXML('binary', self.ws.abs_lookup, f'{self.exp_setup.rfmip_path}lookup_tables/{self.exp_setup.lookuptable}')
 
 
     def load(self, optimise_speed=False):
@@ -90,7 +87,7 @@ class BatchLookUpTable():
 
         self.ws.propmat_clearsky_agendaAuto()
 
-        self.ws.ReadXML(self.ws.abs_lookup, f'{self.exp_setup.rfmip_path}lookup_tables/{self.exp_setup.name}/lookup.xml')
+        self.ws.ReadXML(self.ws.abs_lookup, f'{self.exp_setup.rfmip_path}lookup_tables/{self.exp_setup.lookuptable}')
 
         self.ws.propmat_clearsky_agendaAuto(use_abs_lookup=1)
 
@@ -133,7 +130,7 @@ class BatchLookUpTable():
 
 
     def check_existing_lut(self):
-        return os.path.exists(f'{self.exp_setup.rfmip_path}lookup_tables/{self.exp_setup.name}/lookup.xml')
+        return os.path.exists(f'{self.exp_setup.rfmip_path}lookup_tables/{self.exp_setup.lookuptable}')
 
 
 def replace_values(list_to_replace, item_to_replace, item_to_replace_with):
@@ -147,7 +144,9 @@ def main():
         rfmip_path='/Users/jpetersen/rare/rfmip/',
         input_folder='input/rfmip/',
         arts_data_path='/Users/jpetersen/rare/',
+        lookuptable='lut_test.xml',
         solar_type='None',
+        planck_emission='0',
         which_spectral_grid='wavelength',
         spectral_grid={'min': 380, 'max': 780, 'n': 300},
         species=['water_vapor'],

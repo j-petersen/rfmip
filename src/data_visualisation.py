@@ -8,8 +8,7 @@ from experiment_setup import read_exp_setup
 import helping_functions as hf
 
 
-def plot_irradiance(heights, irrad, lam_grid, exp_setup, index) -> None:
-    ty.plots.styles.use(["typhon", "typhon-dark"])
+def plot_spectral_irradiance(heights, irrad, lam_grid, exp_setup, index) -> None:
     fig, ax = plt.subplots(1, 1, figsize=(12, 9))
     for i, wavelength in enumerate(lam_grid):
         color = hf.rgb4uvvis(wavelength)
@@ -61,7 +60,7 @@ def convert_units(exp_setup, spectral_grid, irradiance):
         return spectral_grid, irradiance
 
         
-def plot_flux_profiles(exp_setup) -> None:
+def plot_spectral_irradiance_profiles(exp_setup) -> None:
     selected_data = pyarts.xml.load(
         f"{exp_setup.rfmip_path}output/{exp_setup.name}/selected_spectral_irradiance.xml"
     )  # wavelength, pressure, down-/upward
@@ -79,7 +78,7 @@ def plot_flux_profiles(exp_setup) -> None:
         spectral_grid_converted, irradiance_converted = convert_units(
             exp_setup=exp_setup, spectral_grid=spectral_grid, irradiance=profile)
 
-        plot_irradiance(
+        plot_spectral_irradiance(
             selected_heights[i],
             irradiance_converted,
             spectral_grid_converted,
@@ -103,7 +102,6 @@ def plot_olr(exp_setup) -> None:
     spectral_grid_converted, irradiance_converted = convert_units(
         exp_setup=exp_setup, spectral_grid=spectral_grid, irradiance=data)
 
-    ty.plots.styles.use(["typhon", "typhon-dark"])
     fig, ax = plt.subplots(1, 1, figsize=(12, 6))
     dat = data[0,:, -1, 0, 0, 1]
     spectral_grid_converted, irradiance_converted = convert_units(
@@ -138,7 +136,6 @@ def plot_level_spectra(exp_setup):
     spectral_grid_converted, irradiance_converted = convert_units(
         exp_setup=exp_setup, spectral_grid=spectral_grid, irradiance=data)
 
-    ty.plots.styles.use(["typhon", "typhon-dark"])
     fig, ax = plt.subplots(1, 1, figsize=(12, 6))
     for lev in range(data[0].shape[1]):
         dat = data[0, :, lev, 0, 0, 1]
@@ -158,11 +155,47 @@ def plot_level_spectra(exp_setup):
         f"{exp_setup.rfmip_path}plots/{exp_setup.name}/spectrum.png", dpi=200
     )
 
+
+def plot_irradiance(exp_setup):
+    data = np.array(pyarts.xml.load(
+        f"{exp_setup.rfmip_path}output/{exp_setup.name}/spectral_irradiance.xml"
+    ))  # site, wavelength, pressure, 1, 1, down-/upward
+    heights = np.squeeze(np.array(pyarts.xml.load(
+        f"{exp_setup.rfmip_path}{exp_setup.input_folder}heights.xml"
+    )))
+    
+    spectral_grid = np.linspace(
+        exp_setup.spectral_grid["min"],
+        exp_setup.spectral_grid["max"],
+        exp_setup.spectral_grid["n"],
+        endpoint=True,
+    )
+
+    fig, ax = plt.subplots(1, 1, figsize=(12, 6))
+    for site in range(100):
+        spectral_grid_converted, spectral_irradiance_converted = convert_units(
+            exp_setup=exp_setup, spectral_grid=spectral_grid, irradiance=data[site, :, :, 0, 0, 0])
+
+        irradiance = np.trapz(spectral_irradiance_converted, spectral_grid_converted, axis=0)    
+
+        ax.plot(
+            irradiance,
+            heights[site]/1000
+            )
+
+    ax.set_xlabel(r'irradiance / W$\,$m$^{-2}\,$')
+    ax.set_ylabel('altitude / km')
+
+
+
 def main():
-    exp_setup = read_exp_setup(exp_name='solar_angle', path='/Users/jpetersen/rare/rfmip/experiment_setups/')
-    plot_flux_profiles(exp_setup=exp_setup)
+    ty.plots.styles.use(["typhon", "typhon-dark"])
+    exp_setup = read_exp_setup(exp_name='testing_rfmip', path='/Users/jpetersen/rare/rfmip/experiment_setups/')
+    # plot_spectral_irradiance_profiles(exp_setup=exp_setup)
     # plot_olr(exp_setup=exp_setup)
     # plot_level_spectra(exp_setup=exp_setup)
+    plot_irradiance(exp_setup=exp_setup)
+    plt.show()
 
 
 if __name__ == "__main__":
