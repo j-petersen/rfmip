@@ -159,4 +159,18 @@ def main():
     
 
 if __name__ == '__main__':
-    main()
+    # the script is just called for tetsing
+    if len(sys.argv) == 1:
+        main()
+
+    # the script is called with exp_setup_names to calc the lut
+    else:
+        exp_setups = []
+        for arg in sys.argv[1:]:
+            exp_setup_path = f'{os.getcwd()}/experiment_setups/'
+            exp_setups.append(setup.read_exp_setup(exp_name=str(arg), path=exp_setup_path))
+
+    for exp in exp_setups:
+            with ty.utils.Timer():
+                lut = BatchLookUpTable(exp)
+                lut.calculate(recalculate=True)
