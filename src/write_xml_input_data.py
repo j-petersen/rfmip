@@ -149,7 +149,7 @@ def species_name_mapping() -> dict:
         "c4f10_GM": "abs_species-C4F10",
         "c5f12_GM": "abs_species-C5F12",
         "c6f14_GM": "abs_species-C6F14",
-        "c7f16_GM": "abs_species-C7F16",
+        "c7f16_GM": None,
         "c8f18_GM": "abs_species-C8F18",
         "c_c4f8_GM": "abs_species-cC4F8",
         "carbon_dioxide_GM": "abs_species-CO2",
