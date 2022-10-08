@@ -172,6 +172,7 @@ if __name__ == '__main__':
             exp_setups.append(read_exp_setup(exp_name=str(arg), path=exp_setup_path))
 
     for exp in exp_setups:
-            with ty.utils.Timer():
-                lut = BatchLookUpTable(exp)
-                lut.calculate(recalculate=True)
+        input_data.create_input_data(exp)
+        with ty.utils.Timer():
+            lut = BatchLookUpTable(exp)
+            lut.calculate(recalculate=True)
