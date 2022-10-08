@@ -7,7 +7,7 @@ from itertools import repeat
 from multiprocessing import Pool
 
 import write_xml_input_data as input_data
-from experiment_setup import ExperimentSetup, setup
+from experiment_setup import ExperimentSetup, read_exp_setup
 
 
 def calc_lookup(exp_setup, recalculate=False):
@@ -169,7 +169,7 @@ if __name__ == '__main__':
         exp_setups = []
         for arg in sys.argv[1:]:
             exp_setup_path = f'{os.getcwd()}/experiment_setups/'
-            exp_setups.append(setup.read_exp_setup(exp_name=str(arg), path=exp_setup_path))
+            exp_setups.append(read_exp_setup(exp_name=str(arg), path=exp_setup_path))
 
     for exp in exp_setups:
             with ty.utils.Timer():
