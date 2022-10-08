@@ -7,7 +7,7 @@ from itertools import repeat
 from multiprocessing import Pool
 
 import write_xml_input_data as input_data
-from experiment_setup import ExperimentSetup
+from experiment_setup import ExperimentSetup, setup
 
 
 def calc_lookup(exp_setup, recalculate=False):
