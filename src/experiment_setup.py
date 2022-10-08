@@ -154,6 +154,40 @@ def rfmip_setup():
     )
     exp.save()
 
+def rfmip_no_star_setup():
+    exp = ExperimentSetup(
+        name='rfmip_no_star',
+        description='rfmip but without a star. (check the effect of planck emission on the flux)',
+        rfmip_path='/work/um0878/users/jpetersen/rfmip/',
+        input_folder='input/rfmip/',
+        arts_data_path='/work/um0878/users/jpetersen/',
+        lookuptable='rfmip.xml',
+        solar_type='None',
+        planck_emission='1',
+        which_spectral_grid='wavelength',
+        spectral_grid={'min': 115.5, 'max': 9_999.5, 'n': 2**15},
+        species=['all'],
+        angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'}
+    )
+    exp.save()
+
+def rfmip_no_emission_setup():
+    exp = ExperimentSetup(
+        name='rfmip_no_emission',
+        description='rfmip but without thermal emission in the atmoshere.',
+        rfmip_path='/work/um0878/users/jpetersen/rfmip/',
+        input_folder='input/rfmip/',
+        arts_data_path='/work/um0878/users/jpetersen/',
+        lookuptable='rfmip.xml',
+        solar_type='Spectrum',
+        planck_emission='0',
+        which_spectral_grid='wavelength',
+        spectral_grid={'min': 115.5, 'max': 9_999.5, 'n': 2**15},
+        species=['all'],
+        angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'}
+    )
+    exp.save()
+
 def main():
     exp_setup_description()
     test_setup()
@@ -161,6 +195,8 @@ def main():
     olr_setup()
     solar_angle_dependency_setup()
     rfmip_setup()
+    rfmip_no_star_setup()
+    rfmip_no_emission_setup()
 
 
 if __name__ == '__main__':
