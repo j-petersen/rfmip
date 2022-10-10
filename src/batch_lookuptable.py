@@ -121,12 +121,12 @@ class BatchLookUpTable():
 
     def add_species(self, species):
         # adding Line MIxing and Self Continuum for some species
+        if "abs_species-O3" in species:
+            species.append("abs_species-O3-XFIT")
         if 'abs_species-H2O' in species:
             replace_values(species, 'abs_species-H2O', ['abs_species-H2O', 'abs_species-H2O-SelfContCKDMT252', 'abs_species-H2OForeignContCKDMT252'])
         if 'abs_species-CO2' in species:
             replace_values(species, 'abs_species-CO2', ['abs_species-CO2', 'abs_species-CO2-LM', 'abs_species-CO2-CKDMT252'])
-        if 'abs_species-O3' in species:
-            replace_values(species, 'abs_species-O3', ['abs_species-O3', 'abs_species-O3-XFIT'])
         if 'abs_species-O2' in species:
             replace_values(species, 'abs_species-O2', ['abs_species-O2', 'abs_species-O2-CIAfunCKDMT100'])
         if 'abs_species-N2' in species:
