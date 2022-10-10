@@ -272,7 +272,7 @@ def replace_values(list_to_replace, item_to_replace, item_to_replace_with):
 
 
 def main():
-    exp = read_exp_setup(exp_name='olr', path='/Users/froemer/wv_continuum/rfmip/experiment_setups/')
+    exp = read_exp_setup(exp_name='solar_angle', path='/Users/jpetersen/rare/rfmip/experiment_setups/')
     print(exp)
     run_arts_batch(exp)
 
