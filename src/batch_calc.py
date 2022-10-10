@@ -79,6 +79,8 @@ def run_arts_batch(exp_setup, verbosity=3):
     if exp_setup.solar_type == 'None':
         ws.gas_scattering_do = 0
         ws.dobatch_calc_agenda = dobatch_calc_agenda__disort
+        ws.gas_scattering_agenda = gas_scattering_agenda__Rayleigh
+
     else:
         ws.gas_scattering_do = 1
         ws.gas_scattering_agenda = gas_scattering_agenda__Rayleigh
@@ -270,7 +272,7 @@ def replace_values(list_to_replace, item_to_replace, item_to_replace_with):
 
 
 def main():
-    exp = read_exp_setup(exp_name='solar_angle', path='/Users/jpetersen/rare/rfmip/experiment_setups/')
+    exp = read_exp_setup(exp_name='olr', path='/Users/froemer/wv_continuum/rfmip/experiment_setups/')
     print(exp)
     run_arts_batch(exp)
 
