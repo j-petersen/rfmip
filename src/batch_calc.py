@@ -81,6 +81,8 @@ def run_arts_batch(exp_setup, verbosity=3):
     if exp_setup.solar_type == 'None':
         ws.gas_scattering_do = 0
         ws.dobatch_calc_agenda = dobatch_calc_agenda__disort
+        ws.gas_scattering_agenda = gas_scattering_agenda__Rayleigh
+
     else:
         ws.gas_scattering_do = 1
         ws.gas_scattering_agenda = gas_scattering_agenda__Rayleigh
