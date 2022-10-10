@@ -1,30 +1,31 @@
 import os
 import sys
 import pyarts
+import argparse
 import numpy as np
 import typhon as ty
-from itertools import repeat
-from multiprocessing import Pool
 
 import write_xml_input_data as input_data
 from experiment_setup import ExperimentSetup, read_exp_setup
 
-
-def calc_lookup(exp_setup, recalculate=False):
-    lut = BatchLookUpTable(exp_setup)
-    lut.calculate(recalculate=recalculate, optimise_speed=True)
-
 class BatchLookUpTable():
-    def __init__(self, exp_setup, ws=None):
+    def __init__(self, exp_setup, ws=None, n_chunks: int = 0):
         self.exp_setup = exp_setup
         self.new_ws = False
         if ws == None:
             ws = pyarts.workspace.Workspace()
             self.new_ws = True
         self.ws = ws
+        if n_chunks == 0 or n_chunks == 1:
+            self.n_chunks=None
+        elif 2 <= n_chunks <= 99: 
+            self.n_chunks=n_chunks
+        else:
+            raise ValueError(f'`n_chunks` must be between 2 and 99 (or 0 / 1 for no splitting) but is {n_chunks}!')
 
 
-    def calculate(self, load_if_exist=False, recalculate=False, optimise_speed=False):
+    def calculate(self, load_if_exist=False, recalculate=False, optimise_speed=False, chunk_id=None):
+        self.chunk_id=chunk_id
         if self.check_existing_lut():
             if not recalculate:
                 print("The Lookup Table is already calculated.")
@@ -75,8 +76,13 @@ class BatchLookUpTable():
         self.ws.abs_lookupCalc()
 
         self.ws.propmat_clearsky_agendaAuto(use_abs_lookup=1)
-
-        self.ws.WriteXML('binary', self.ws.abs_lookup, f'{self.exp_setup.rfmip_path}lookup_tables/{self.exp_setup.lookuptable}')
+        
+        savename = (
+            f'{self.exp_setup.rfmip_path}lookup_tables/{self.exp_setup.lookuptable}'
+            if self.n_chunks is None
+            else f'{self.exp_setup.rfmip_path}lookup_tables/chunk{str(self.chunk_id).zfill(2)}_{self.exp_setup.lookuptable}'
+        )
+        pyarts.xml.save(self.ws.abs_lookup.value, savename)
 
 
     def load(self, optimise_speed=False):
@@ -98,7 +104,6 @@ class BatchLookUpTable():
         self.ws.lbl_checked = 1
 
 
-
     def f_grid_from_spectral_grid(self):
         if self.exp_setup.which_spectral_grid == 'frequency':
             f_grid = np.linspace(self.exp_setup.spectral_grid['min'], self.exp_setup.spectral_grid['max'], self.exp_setup.spectral_grid['n'], endpoint=True)
@@ -109,6 +114,8 @@ class BatchLookUpTable():
             kayser_grid = np.linspace(self.exp_setup.spectral_grid['min'], self.exp_setup.spectral_grid['max'], self.exp_setup.spectral_grid['n'], endpoint=True)*1e2
             f_grid = ty.physics.wavenumber2frequency(kayser_grid)
 
+        if self.n_chunks is not None:
+            f_grid = get_chunk(f_grid, self.n_chunks, self.chunk_id)
         self.ws.f_grid = f_grid
 
 
@@ -138,41 +145,86 @@ def replace_values(list_to_replace, item_to_replace, item_to_replace_with):
     return [item_to_replace_with if item == item_to_replace else item for item in list_to_replace]
 
 
-def main():
-    exp = ExperimentSetup(
-        name='lut',
-        description='testing lookup table',
-        rfmip_path='/Users/jpetersen/rare/rfmip/',
-        input_folder='input/rfmip/',
-        arts_data_path='/Users/jpetersen/rare/',
-        lookuptable='lut_test.xml',
-        solar_type='None',
-        planck_emission='0',
-        which_spectral_grid='wavelength',
-        spectral_grid={'min': 380, 'max': 780, 'n': 300},
-        species=['water_vapor'],
-        angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'}
-    )
+def get_chunk(arr, n_chunks, chunk_id):
+    slice_len = np.shape(arr)[0]//n_chunks
+    return arr[slice_len*chunk_id:slice_len*(chunk_id+1)]
+
+ 
+def combine_luts(exp_setup, n_chunks=8):
+    if exp_setup is None:
+        exp_setup = ExperimentSetup(
+            name='lut',
+            description='testing lookup table',
+            rfmip_path='/Users/jpetersen/rare/rfmip/',
+            input_folder='input/rfmip/',
+            arts_data_path='/Users/jpetersen/rare/',
+            lookuptable='lut_test.xml',
+            solar_type='None',
+            planck_emission='0',
+            which_spectral_grid='wavelength',
+            spectral_grid={'min': 380, 'max': 780, 'n': 10},
+            species=['water_vapor'],
+            angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'}
+        )
+    print('Combining luts')
+    lut_list = [
+        pyarts.xml.load(
+            f'{exp_setup.rfmip_path}lookup_tables/chunk{str(i).zfill(2)}_{exp_setup.lookuptable}'
+        ) for i in range(n_chunks)
+    ]
+    main_lut = lut_list[0]
+    for lut in lut_list[1:]:
+        main_lut.f_grid = pyarts.arts.Vector(np.concatenate((main_lut.f_grid, lut.f_grid), axis=0))
+        main_lut.xsec = pyarts.arts.Tensor4(np.concatenate((main_lut.xsec, lut.xsec), axis=2))
+
+    pyarts.xml.save(main_lut, f'{exp_setup.rfmip_path}lookup_tables/combined_{exp_setup.lookuptable}')
+
+
+def main(exp=None, n_chunks=0, chunks_id=None):
+    if exp is None:
+        exp = ExperimentSetup(
+            name='lut',
+            description='testing lookup table',
+            rfmip_path='/Users/jpetersen/rare/rfmip/',
+            input_folder='input/rfmip/',
+            arts_data_path='/Users/jpetersen/rare/',
+            lookuptable='lut_test.xml',
+            solar_type='None',
+            planck_emission='0',
+            which_spectral_grid='wavelength',
+            spectral_grid={'min': 380, 'max': 780, 'n': 10},
+            species=['water_vapor'],
+            angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'}
+        )
     
     with ty.utils.Timer():
-        lut = BatchLookUpTable(exp)
-        lut.calculate(recalculate=True)
+        lut = BatchLookUpTable(exp, n_chunks=n_chunks)
+        lut.calculate(recalculate=True, chunk_id=chunks_id, optimise_speed=True)
     
 
 if __name__ == '__main__':
-    # the script is just called for tetsing
-    if len(sys.argv) == 1:
-        main()
+    parser = argparse.ArgumentParser(description="Arguent parser for lookuptable calculation",
+                                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("-e", "--experiment_setups", type=str, nargs='*', help="Experiment_setups for which the lookuptabe will be calculated", required=False, default=[None])                               
+    parser.add_argument("-c", "--chunks", type=int, nargs=2, help="Dived lut calculation in differend f_grid in NCHUNKS chunks and uses CHUNK_ID for the current calculation.", metavar='NCHUNKS CHUNK_ID', required=False, default=[0, None])
+    parser.add_argument("--combine_luts", action="store_true", help="Flage to combine the lookuptables")
+    config = vars(parser.parse_args())
+    print(config)
+    
+    if config['combine_luts']:
+        for exp_name in config['experiment_setups']:
+            exp = exp_name
+            if exp_name is not None:
+                exp_setup_path = f'{os.getcwd()}/experiment_setups/'
+                exp = read_exp_setup(exp_name=str(exp_name), path=exp_setup_path)
+            combine_luts(exp, n_chunks=config['chunks'][0])
+        exit()
 
-    # the script is called with exp_setup_names to calc the lut
-    else:
-        exp_setups = []
-        for arg in sys.argv[1:]:
+    for exp_name in config['experiment_setups']:
+        exp = exp_name
+        if exp_name is not None:
             exp_setup_path = f'{os.getcwd()}/experiment_setups/'
-            exp_setups.append(read_exp_setup(exp_name=str(arg), path=exp_setup_path))
-
-    for exp in exp_setups:
-        input_data.create_input_data(exp)
-        with ty.utils.Timer():
-            lut = BatchLookUpTable(exp)
-            lut.calculate(recalculate=True)
+            exp = read_exp_setup(exp_name=str(exp_name), path=exp_setup_path)
+            if not os.path.exists(f'{exp_name.rfmip_path}{exp_name.input_folder}'):
+                input_data.create_input_data(exp)
+        main(exp=exp, n_chunks=config['chunks'][0], chunks_id=config['chunks'][1])
