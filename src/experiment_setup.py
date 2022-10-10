@@ -86,7 +86,7 @@ def olr_setup():
         arts_data_path='/Users/froemer/Documents/',
         solar_type='None',
         which_spectral_grid='kayser',
-        spectral_grid={'min': 1, 'max': 2500, 'n': 100},
+        spectral_grid={'min': 1, 'max': 2500, 'n': 1000},
         species=['water_vapor', 'ozone', 'carbon_dioxide_GM', 'nitrous_oxide_GM'],
         angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'}
     )
