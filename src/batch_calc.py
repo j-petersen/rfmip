@@ -263,7 +263,6 @@ def add_species(ws, species):
         species.append('abs_species-H2O-SelfContCKDMT252')
         species.append('abs_species-H2O-ForeignContCKDMT252')
     if 'abs_species-CO2' in species:
-        species.append('abs_species-CO2-LM')
         species.append('abs_species-CO2-CKDMT252')
     if 'abs_species-O2' in species:
         species.append('abs_species-O2-CIAfunCKDMT100')
