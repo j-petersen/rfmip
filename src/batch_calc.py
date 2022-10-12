@@ -257,24 +257,23 @@ def gas_scattering_agenda__Rayleigh(ws):
 def add_species(ws, species):
     # NO NH3!!
     # replace CO2 with CO2 LineMixing
+    if "abs_species-O3" in species:
+        species.append("abs_species-O3-XFIT")
     if 'abs_species-H2O' in species:
-        replace_values(species, 'abs_species-H2O', ['abs_species-H2O', 'abs_species-H2O-SelfContCKDMT252', 'abs_species-H2OForeignContCKDMT252'])
+        species.append('abs_species-H2O-SelfContCKDMT252')
+        species.append('abs_species-H2O-ForeignContCKDMT252')
     if 'abs_species-CO2' in species:
-        replace_values(species, 'abs_species-CO2', ['abs_species-CO2', 'abs_species-CO2-LM', 'abs_species-CO2-CKDMT252'])
-    if 'abs_species-O3' in species:
-        replace_values(species, 'abs_species-O3', ['abs_species-O3', 'abs_species-O3-XFIT'])
+        species.append('abs_species-CO2-LM')
+        species.append('abs_species-CO2-CKDMT252')
     if 'abs_species-O2' in species:
-        replace_values(species, 'abs_species-O2', ['abs_species-O2', 'abs_species-O2-CIAfunCKDMT100'])   
+        species.append('abs_species-O2-CIAfunCKDMT100')
     if 'abs_species-N2' in species:
-        replace_values(species, 'abs_species-N2', ['abs_species-N2', 'abs_species-N2-CIAfunCKDMT252', 'abs_species-N2-CIAfunCKDMT252'])
+        species.append('abs_species-N2-CIAfunCKDMT252')
+        species.append('abs_species-N2-CIAfunCKDMT252')
 
     species = [spec[12:] for spec in species]
     
     ws.abs_speciesSet(species=species)
-
-
-def replace_values(list_to_replace, item_to_replace, item_to_replace_with):
-    return [item_to_replace_with if item == item_to_replace else item for item in list_to_replace]
 
 
 def main():
