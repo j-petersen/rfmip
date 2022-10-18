@@ -44,7 +44,7 @@ class BatchLookUpTable():
 
 
     def lut_setup(self):
-        # self.ws.LegacyContinuaInit()
+        self.ws.LegacyContinuaInit()
         self.ws.PlanetSet(option="Earth")        
 
         self.f_grid_from_spectral_grid()
