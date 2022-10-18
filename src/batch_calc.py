@@ -255,8 +255,8 @@ def gas_scattering_agenda__Rayleigh(ws):
 
 
 def add_species(ws, species):
-    # if "abs_species-O3" in species:
-    #     species.append("abs_species-O3-XFIT")
+    if "abs_species-O3" in species:
+        species.append("abs_species-O3-XFIT")
     if 'abs_species-H2O' in species:
         species = replace_values(species, 'abs_species-H2O', 'abs_species-H2O, H2O-SelfContCKDMT350, H2O-ForeignContCKDMT350')
     if 'abs_species-CO2' in species:
