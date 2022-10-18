@@ -44,7 +44,7 @@ class BatchLookUpTable():
 
 
     def lut_setup(self):
-        self.ws.LegacyContinuaInit()
+        # self.ws.LegacyContinuaInit()
         self.ws.PlanetSet(option="Earth")        
 
         self.f_grid_from_spectral_grid()
@@ -53,7 +53,7 @@ class BatchLookUpTable():
         self.ws.batch_atm_fields_compact = pyarts.xml.load(f'{self.exp_setup.rfmip_path}{self.exp_setup.input_folder}atm_fields.xml')
         species = pyarts.xml.load(f"{self.exp_setup.rfmip_path}{self.exp_setup.input_folder}species.xml")
         self.add_species(species)
-
+        
 
     def calculate_lut(self, optimise_speed=False):
         # Read a line file and a matching small frequency grid
@@ -82,7 +82,7 @@ class BatchLookUpTable():
             if self.n_chunks is None
             else f'{self.exp_setup.rfmip_path}lookup_tables/chunk{str(self.chunk_id).zfill(2)}_{self.exp_setup.lookuptable}'
         )
-        pyarts.xml.save(self.ws.abs_lookup.value, savename)
+        self.ws.abs_lookup.value.savexml(file=savename, type='binary')
 
 
     def load(self, optimise_speed=False):
@@ -118,29 +118,29 @@ class BatchLookUpTable():
             f_grid = get_chunk(f_grid, self.n_chunks, self.chunk_id)
         self.ws.f_grid = f_grid
 
-
+       
     def add_species(self, species):
-        # adding Line MIxing and Self Continuum for some species
         if "abs_species-O3" in species:
             species.append("abs_species-O3-XFIT")
         if 'abs_species-H2O' in species:
-            species.append('abs_species-H2O-SelfContCKDMT252')
-            species.append('abs_species-H2O-ForeignContCKDMT252')
+            species = replace_values(species, 'abs_species-H2O', 'abs_species-H2O, H2O-SelfContCKDMT350, H2O-ForeignContCKDMT350')
         if 'abs_species-CO2' in species:
-            species.append('abs_species-CO2-CKDMT252')
+            species = replace_values(species, 'abs_species-CO2', 'abs_species-CO2, CO2-CKDMT252')
         if 'abs_species-O2' in species:
-            species.append('abs_species-O2-CIAfunCKDMT100')
+            species = replace_values(species, 'abs_species-O2', 'abs_species-O2, O2-CIAfunCKDMT100')
         if 'abs_species-N2' in species:
-            species.append('abs_species-N2-CIAfunCKDMT252')
-            species.append('abs_species-N2-CIAfunCKDMT252')
-
+            species = replace_values(species, 'abs_species-N2', 'abs_species-N2, N2-CIAfunCKDMT252, N2-CIAfunCKDMT252')
+        
         species = [spec[12:] for spec in species]
-
         self.ws.abs_speciesSet(species=species)
 
 
     def check_existing_lut(self):
         return os.path.exists(f'{self.exp_setup.rfmip_path}lookup_tables/{self.exp_setup.lookuptable}')
+
+
+def replace_values(list_to_replace, item_to_replace, item_to_replace_with):
+    return [item_to_replace_with if item == item_to_replace else item for item in list_to_replace]
 
 
 def get_chunk(arr, n_chunks, chunk_id):
@@ -175,7 +175,7 @@ def combine_luts(exp_setup, n_chunks=8):
         main_lut.f_grid = pyarts.arts.Vector(np.concatenate((main_lut.f_grid, lut.f_grid), axis=0))
         main_lut.xsec = pyarts.arts.Tensor4(np.concatenate((main_lut.xsec, lut.xsec), axis=2))
 
-    pyarts.xml.save(main_lut, f'{exp_setup.rfmip_path}lookup_tables/combined_{exp_setup.lookuptable}')
+    main_lut.savexml(file=f'{exp_setup.rfmip_path}lookup_tables/{exp_setup.lookuptable}', type='binary')
 
 
 def main(exp=None, n_chunks=0, chunks_id=None):
@@ -192,7 +192,8 @@ def main(exp=None, n_chunks=0, chunks_id=None):
             which_spectral_grid='wavelength',
             spectral_grid={'min': 380, 'max': 780, 'n': 10},
             species=['water_vapor'],
-            angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'}
+            angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'},
+            h2o="H2O, H2O-SelfContCKDMT320, H2O-ForeignContCKDMT320"
         )
     
     with ty.utils.Timer():
@@ -223,6 +224,6 @@ if __name__ == '__main__':
         if exp_name is not None:
             exp_setup_path = f'{os.getcwd()}/experiment_setups/'
             exp = read_exp_setup(exp_name=str(exp_name), path=exp_setup_path)
-            if not os.path.exists(f'{exp_name.rfmip_path}{exp_name.input_folder}'):
+            if not os.path.exists(f'{exp.rfmip_path}{exp.input_folder}'):
                 input_data.create_input_data(exp)
         main(exp=exp, n_chunks=config['chunks'][0], chunks_id=config['chunks'][1])

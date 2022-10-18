@@ -19,6 +19,7 @@ class ExperimentSetup:
     solar_type: str
     planck_emission: str
     angular_grid: dict
+    h2o: str
     savename: str = '' #dataclasses.field(init=False)
 
     def __post_init__(self):
@@ -64,7 +65,8 @@ def exp_setup_description():
         which_spectral_grid='give the unit for the f_grid. Options are frequency, wavelength or kayser',
         spectral_grid={'min': 'minimum of spectral grid', 'max': 'minimum of spectral grid', 'n': 'number of spectral grid points'},
         species=['select species used for calculation. Select ["all"] to use all species defined in rfmip.'],
-        angular_grid={'N_za_grid': 'Number of zenith angles: recommended 20', 'N_aa_grid': 'Number of azimuth angles: recommended 41', 'za_grid_type': 'Zenith angle grid type: linear, linear_mu or double_gauss'}
+        angular_grid={'N_za_grid': 'Number of zenith angles: recommended 20', 'N_aa_grid': 'Number of azimuth angles: recommended 41', 'za_grid_type': 'Zenith angle grid type: linear, linear_mu or double_gauss'},
+        h2o="choose which water vapor continua to include"
     )
     dis.save()
     
@@ -81,7 +83,8 @@ def test_setup():
         which_spectral_grid='wavelength',
         spectral_grid={'min': 380, 'max': 780, 'n': 21},
         species=['water_vapor', 'ozone', 'carbon_dioxide_GM', 'nitrous_oxide_GM'],
-        angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'}
+        angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'},
+        h2o="H2O, H2O-SelfContCKDMT320, H2O-ForeignContCKDMT320"
     )
     exp.save()
 
@@ -98,7 +101,8 @@ def testing_rfmip_setup():
         which_spectral_grid='wavelength',
         spectral_grid={'min': 115.5, 'max': 9_999.5, 'n': 2**10},
         species=['all'],
-        angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'}
+        angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'},
+        h2o="H2O, H2O-SelfContCKDMT320, H2O-ForeignContCKDMT320"
     )
     exp.save()
 
@@ -107,16 +111,17 @@ def olr_setup():
     exp = ExperimentSetup(
         name='olr',
         description='goal is to reproduce a olr plot',
-        rfmip_path='/Users/jpetersen/rare/rfmip/',
+        rfmip_path='/Users/froemer/Documents/wv_continuum/rfmip/',
         input_folder='input/olr/',
-        arts_data_path='/Users/jpetersen/rare/',
+        arts_data_path='/Users/froemer/Documents/',
         lookuptable='olr.xml',
         solar_type='None',
         planck_emission='1',
         which_spectral_grid='kayser',
         spectral_grid={'min': 1, 'max': 2500, 'n': 1000},
         species=['water_vapor', 'ozone', 'carbon_dioxide_GM', 'nitrous_oxide_GM'],
-        angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'}
+        angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'},
+        h2o="H2O, H2O-SelfContCKDMT320, H2O-ForeignContCKDMT320"
     )
     exp.save()
 
@@ -133,7 +138,8 @@ def solar_angle_dependency_setup():
         which_spectral_grid='wavelength',
         spectral_grid={'min': 380, 'max': 780, 'n': 12},
         species=['water_vapor', 'ozone', 'carbon_dioxide_GM', 'methane_GM', 'nitrous_oxide_GM'],
-        angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'}
+        angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'},
+        h2o="H2O, H2O-SelfContCKDMT320, H2O-ForeignContCKDMT320"
     )
     exp.save()
 
@@ -150,7 +156,8 @@ def rfmip_setup():
         which_spectral_grid='wavelength',
         spectral_grid={'min': 115.5, 'max': 9_999.5, 'n': 2**15},
         species=['all'],
-        angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'}
+        angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'},
+        h2o="H2O, H2O-SelfContCKDMT320, H2O-ForeignContCKDMT320"
     )
     exp.save()
 
@@ -167,7 +174,8 @@ def rfmip_no_star_setup():
         which_spectral_grid='wavelength',
         spectral_grid={'min': 115.5, 'max': 9_999.5, 'n': 2**15},
         species=['all'],
-        angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'}
+        angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'},
+        h2o="H2O, H2O-SelfContCKDMT320, H2O-ForeignContCKDMT320"
     )
     exp.save()
 
@@ -184,7 +192,8 @@ def rfmip_no_emission_setup():
         which_spectral_grid='wavelength',
         spectral_grid={'min': 115.5, 'max': 9_999.5, 'n': 2**15},
         species=['all'],
-        angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'}
+        angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'},
+        h2o="H2O, H2O-SelfContCKDMT320, H2O-ForeignContCKDMT320"
     )
     exp.save()
 
