@@ -216,27 +216,48 @@ def get_elevation(geo_data=None):
 def scaled_solar_spectrum(exp_setup) -> None:
     total_solar_irradiances = pyarts.xml.load(f"{exp_setup.rfmip_path}{exp_setup.input_folder}total_solar_irradiance.xml")
     gf2 = pyarts.xml.load(f"{exp_setup.arts_data_path}arts-xml-data/star/Sun/solar_spectrum_May_2004.xml")
-    arr_gf2 = pyarts.arts.ArrayOfGriddedField2()
 
-    sigma = 5.670375419e-8
-    star_radius = 6.96342e8
-    star_distance = 1.495978707e11
-    star_effective_temperature = 5772
-    alpha = np.arctan2(star_radius, star_distance)
-    tsi_spectrum = sigma * star_effective_temperature**4 * np.sin(alpha)**2
-    
+    arr_gf2 = pyarts.arts.ArrayOfGriddedField2()
     for tsi in total_solar_irradiances:
-        gf2_scaled = gf2
-        sigma * 5772**4 * np.sin(alpha)**2
-        gf2_scaled.data = gf2_scaled.data * tsi/tsi_spectrum
-        arr_gf2.append(gf2_scaled)
+        arr_gf2.append(scale2tsi(gf2, tsi))
 
     write_xml(arr_gf2, "star_spectra.xml", exp_setup)
 
 
+def irradstar2irradToa(irradiance, star_radius=6.963242e8, star_distance=1.495978707e11):
+    """ Converts radiance at star surface to irradance at TOA"""
+    earth_radius =  6_378_000
+    star_distance -= (100_000 + earth_radius)
+    # accounts for the distance
+    factor = star_radius**2/(star_radius**2 + star_distance**2)
+
+    return irradiance * factor
+
+
+def irradTOA2irradstar(irradiance, star_radius=6.963242e8, star_distance=1.495978707e11):
+    """ Converts radiance at TOA to irradance at star surface"""
+    earth_radius =  6_378_000
+    star_distance -= (100_000 + earth_radius)
+    # accounts for the distance
+    factor = star_radius**2/(star_radius**2 + star_distance**2)
+
+    return irradiance / factor
+
+
+def scale2tsi(spectrum, tsi=1366, at_toa=False):
+    if not at_toa:
+        spectrum.data = irradstar2irradToa(spectrum.data)
+    f_grid = spectrum.grids[0]
+    spec_tsi = np.trapz(spectrum.data[:, 0], f_grid)
+    spectrum.data = spectrum.data * tsi/spec_tsi
+    if not at_toa:
+        spectrum.data = irradTOA2irradstar(spectrum.data)
+    return spectrum
+
+
 def main():
     exp_setup = read_exp_setup(
-        exp_name="olr", path="/Users/jpetersen/rare/rfmip/experiment_setups/",
+        exp_name="testing_rfmip", path="/Users/jpetersen/rare/rfmip/experiment_setups/",
     )
     create_input_data(exp_setup=exp_setup)
 
