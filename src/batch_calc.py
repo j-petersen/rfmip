@@ -66,7 +66,7 @@ def run_arts_batch(exp_setup, verbosity=3):
 
     ## Lookup Table
     lut = BatchLookUpTable(exp_setup=exp_setup, ws=ws)
-    lut.calculate(load_if_exist=True, optimise_speed=True)
+    lut.calculate(load_if_exist=True)
 
     ## Surface
     # set surface resolution

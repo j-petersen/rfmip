@@ -24,13 +24,13 @@ class BatchLookUpTable():
             raise ValueError(f'`n_chunks` must be between 2 and 99 (or 0 / 1 for no splitting) but is {n_chunks}!')
 
 
-    def calculate(self, load_if_exist=False, recalculate=False, optimise_speed=False, chunk_id=None):
+    def calculate(self, load_if_exist=False, recalculate=False, chunk_id=None):
         self.chunk_id=chunk_id
         if self.check_existing_lut():
             if not recalculate:
                 print("The Lookup Table is already calculated.")
                 if load_if_exist:
-                    self.load(optimise_speed=optimise_speed)
+                    self.load()
                 return
             print('The Lookuptable will be recalculated.')
 
@@ -39,7 +39,7 @@ class BatchLookUpTable():
             self.lut_setup()
         print('The Lookup Table calculation is starting.')
         with ty.utils.Timer():
-            self.calculate_lut(optimise_speed=optimise_speed)
+            self.calculate_lut()
         print('Finished with Lookup Table calculation.')
 
 
@@ -55,7 +55,7 @@ class BatchLookUpTable():
         self.add_species(species)
         
 
-    def calculate_lut(self, optimise_speed=False):
+    def calculate_lut(self):
         # Read a line file and a matching small frequency grid
         self.ws.abs_lines_per_speciesReadSpeciesSplitCatalog(
         basename=f'{self.exp_setup.arts_data_path}arts-cat-data/lines/'
@@ -65,9 +65,8 @@ class BatchLookUpTable():
             basename=f'{self.exp_setup.arts_data_path}arts-cat-data/xsec/'
         )
 
-        if optimise_speed:
-            self.ws.abs_lines_per_speciesCutoff(option='ByLine', value=750e9)
-            self.ws.abs_lines_per_speciesCompact()
+        self.ws.abs_lines_per_speciesCutoff(option='ByLine', value=750e9)
+        self.ws.abs_lines_per_speciesCompact()
 
         self.ws.propmat_clearsky_agendaAuto()
 
@@ -85,12 +84,11 @@ class BatchLookUpTable():
         self.ws.abs_lookup.value.savexml(file=savename, type='binary')
 
 
-    def load(self, optimise_speed=False):
+    def load(self):
         """ Loads existing Lookup table and adjust it for the calculation. """
         self.ws.Touch(self.ws.abs_lines_per_species)
-        if optimise_speed:
-            self.ws.abs_lines_per_speciesCutoff(option="ByLine", value=750e9)
-            self.ws.abs_lines_per_speciesCompact()
+        self.ws.abs_lines_per_speciesCutoff(option="ByLine", value=750e9)
+        self.ws.abs_lines_per_speciesCompact()
 
         self.ws.propmat_clearsky_agendaAuto()
 
@@ -198,7 +196,7 @@ def main(exp=None, n_chunks=0, chunks_id=None):
     
     with ty.utils.Timer():
         lut = BatchLookUpTable(exp, n_chunks=n_chunks)
-        lut.calculate(recalculate=True, chunk_id=chunks_id, optimise_speed=True)
+        lut.calculate(recalculate=True, chunk_id=chunks_id)
     
 
 if __name__ == '__main__':
