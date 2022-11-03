@@ -219,15 +219,17 @@ def scaled_solar_spectrum(exp_setup) -> None:
     gf2 = pyarts.xml.load(f"{exp_setup.arts_data_path}arts-xml-data/star/Sun/solar_spectrum_May_2004.xml")
 
     arr_gf2 = pyarts.arts.ArrayOfGriddedField2()
-    for tsi in total_solar_irradiances:
-        arr_gf2.append(scale2tsi(exp_setup, gf2, tsi))
+    for i, tsi in enumerate(total_solar_irradiances):
+        arr_gf2.append(scale2tsi(exp_setup, gf2, tsi=tsi, idx=i))
 
     write_xml(arr_gf2, "star_spectra.xml", exp_setup)
 
 
-def scale2tsi(exp_setup, spectrum, tsi=1366, at_toa=False):
+def scale2tsi(exp_setup, spectrum, tsi=1366, at_toa=False, idx=-1):
     if not at_toa:
-        spectrum.data = irradstar2irradToa(spectrum.data)
+        if idx != -1:
+            offset = get_site_star_distance_offset(exp_setup=exp_setup)[idx]
+        spectrum.data = irradstar2irradToa(spectrum.data, distance_offset=offset)
     solar_f_grid = spectrum.grids[0]
     solar_spec = spectrum.data[:, 0]
     sim_f_grid = f_grid_from_spectral_grid(exp_setup=exp_setup)
@@ -243,10 +245,10 @@ def scale2tsi(exp_setup, spectrum, tsi=1366, at_toa=False):
     return spectrum
 
 
-def irradstar2irradToa(irradiance, star_radius=6.963242e8, star_distance=1.495978707e11):
+def irradstar2irradToa(irradiance, star_radius=6.963242e8, star_distance=1.495978707e11, distance_offset=0):
     """ Converts radiance at star surface to irradance at TOA"""
     earth_radius =  6_378_000
-    star_distance -= (100_000 + earth_radius)
+    star_distance -= (100_000 + earth_radius + distance_offset)
     # accounts for the distance
     factor = star_radius**2/(star_radius**2 + star_distance**2)
 
@@ -257,10 +259,20 @@ def irradTOA2irradstar(irradiance, star_radius=6.963242e8, star_distance=1.49597
     """ Converts radiance at TOA to irradance at star surface"""
     earth_radius =  6_378_000
     star_distance -= (100_000 + earth_radius)
+
     # accounts for the distance
     factor = star_radius**2/(star_radius**2 + star_distance**2)
 
     return irradiance / factor
+
+def get_site_star_distance_offset(exp_setup, earth_radius=6.378e6):
+    heights = pyarts.xml.load(f"{exp_setup.rfmip_path}{exp_setup.input_folder}heights.xml")
+    sza = pyarts.xml.load(f"{exp_setup.rfmip_path}{exp_setup.input_folder}solar_zenith_angle.xml")
+    toa_height = heights[:, -1]
+
+    offset = 1e5-toa_height # from toa definition
+    offset += np.sin(np.deg2rad(sza)) * (earth_radius+toa_height)
+    return offset
 
 
 def f_grid_from_spectral_grid(exp_setup):
@@ -280,6 +292,7 @@ def main():
         exp_name="testing_rfmip", path="/Users/jpetersen/rare/rfmip/experiment_setups/",
     )
     create_input_data(exp_setup=exp_setup)
+    # get_site_star_distance_offset(exp_setup=exp_setup)
 
 
 if __name__ == "__main__":
