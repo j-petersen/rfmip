@@ -4,6 +4,7 @@ import requests
 import numpy as np
 import typhon as ty
 import pandas as pd
+from scipy import interpolate
 from urllib.request import urlretrieve
 
 from experiment_setup import read_exp_setup
@@ -219,9 +220,27 @@ def scaled_solar_spectrum(exp_setup) -> None:
 
     arr_gf2 = pyarts.arts.ArrayOfGriddedField2()
     for tsi in total_solar_irradiances:
-        arr_gf2.append(scale2tsi(gf2, tsi))
+        arr_gf2.append(scale2tsi(exp_setup, gf2, tsi))
 
     write_xml(arr_gf2, "star_spectra.xml", exp_setup)
+
+
+def scale2tsi(exp_setup, spectrum, tsi=1366, at_toa=False):
+    if not at_toa:
+        spectrum.data = irradstar2irradToa(spectrum.data)
+    solar_f_grid = spectrum.grids[0]
+    solar_spec = spectrum.data[:, 0]
+    sim_f_grid = f_grid_from_spectral_grid(exp_setup=exp_setup)
+
+    f = interpolate.interp1d(solar_f_grid, solar_spec, kind='linear')
+    interp_spec = f(sim_f_grid)
+
+    spec_tsi = np.trapz(interp_spec, sim_f_grid)
+    
+    spectrum.data = spectrum.data * tsi/spec_tsi
+    if not at_toa:
+        spectrum.data = irradTOA2irradstar(spectrum.data)
+    return spectrum
 
 
 def irradstar2irradToa(irradiance, star_radius=6.963242e8, star_distance=1.495978707e11):
@@ -244,16 +263,17 @@ def irradTOA2irradstar(irradiance, star_radius=6.963242e8, star_distance=1.49597
     return irradiance / factor
 
 
-def scale2tsi(spectrum, tsi=1366, at_toa=False):
-    if not at_toa:
-        spectrum.data = irradstar2irradToa(spectrum.data)
-    f_grid = spectrum.grids[0]
-    spec_tsi = np.trapz(spectrum.data[:, 0], f_grid)
-    spectrum.data = spectrum.data * tsi/spec_tsi
-    if not at_toa:
-        spectrum.data = irradTOA2irradstar(spectrum.data)
-    return spectrum
+def f_grid_from_spectral_grid(exp_setup):
+    if exp_setup.which_spectral_grid == 'frequency':
+        f_grid = np.linspace(exp_setup.spectral_grid['min'], exp_setup.spectral_grid['max'], exp_setup.spectral_grid['n'], endpoint=True)
+    elif exp_setup.which_spectral_grid == 'wavelength':
+        lam_grid = np.linspace(exp_setup.spectral_grid['min'], exp_setup.spectral_grid['max'], exp_setup.spectral_grid['n'], endpoint=True)*1e-9
+        f_grid = ty.physics.wavelength2frequency(lam_grid)[::-1]
+    elif exp_setup.which_spectral_grid == 'kayser':
+        kayser_grid = np.linspace(exp_setup.spectral_grid['min'], exp_setup.spectral_grid['max'], exp_setup.spectral_grid['n'], endpoint=True)*1e2
+        f_grid = ty.physics.wavenumber2frequency(kayser_grid)
 
+    return f_grid
 
 def main():
     exp_setup = read_exp_setup(
