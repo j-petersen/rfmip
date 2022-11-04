@@ -12,7 +12,6 @@ def run_arts_batch(exp_setup, verbosity=3):
 
     ws = pyarts.workspace.Workspace(verbosity=verbosity)
     
-    ws.LegacyContinuaInit()
     ws.PlanetSet(option="Earth")
 
     ws.IndexCreate('planck_emission')
