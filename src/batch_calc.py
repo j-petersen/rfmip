@@ -119,6 +119,7 @@ def run_arts_batch(exp_setup, verbosity=3):
     
     print('saving')
     ws.WriteXML('binary', ws.dobatch_spectral_irradiance_field, f'{exp_setup.rfmip_path}output/{exp_setup.name}/spectral_irradiance.xml')
+    ws.WriteXML('binary', ws.dobatch_irradiance_field, f'{exp_setup.rfmip_path}output/{exp_setup.name}/irradiance.xml')
 
 
 @pyarts.workspace.arts_agenda(allow_callbacks=False)
@@ -219,7 +220,7 @@ def dobatch_calc_agenda__disort_spectrum(ws):
     ws.Extract(ws.solar_zenith_angle, ws.solar_zenith_angles, ws.ybatch_index)
     ws.Extract(ws.star_spectrum_raw, ws.star_spectras, ws.ybatch_index)
 
-    ws.starsAddSingleFromGrid(star_spectrum_raw=ws.star_spectrum_raw, temperature=0, longitude=ws.solar_zenith_angle)
+    ws.starsAddSingleFromGridAtLocation(star_spectrum_raw=ws.star_spectrum_raw, temperature=0, longitude=ws.solar_zenith_angle)
 
     # recalcs the atmosphere
     ws.AtmFieldsAndParticleBulkPropFieldFromCompact()

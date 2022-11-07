@@ -220,13 +220,14 @@ def scaled_solar_spectrum(exp_setup) -> None:
 
     arr_gf2 = pyarts.arts.ArrayOfGriddedField2()
     for i, tsi in enumerate(total_solar_irradiances):
-        arr_gf2.append(scale2tsi(exp_setup, gf2, tsi=tsi, idx=i))
+        arr_gf2.append(scale2tsi(exp_setup, gf2, tsi=tsi, idx=-1)) # no offset - chose i if you want the offset
 
     write_xml(arr_gf2, "star_spectra.xml", exp_setup)
 
 
 def scale2tsi(exp_setup, spectrum, tsi=1366, at_toa=False, idx=-1):
     if not at_toa:
+        offset = 0
         if idx != -1:
             offset = get_site_star_distance_offset(exp_setup=exp_setup)[idx]
         spectrum.data = irradstar2irradToa(spectrum.data, distance_offset=offset)
@@ -240,8 +241,8 @@ def scale2tsi(exp_setup, spectrum, tsi=1366, at_toa=False, idx=-1):
     spec_tsi = np.trapz(interp_spec, sim_f_grid)
     
     spectrum.data = spectrum.data * tsi/spec_tsi
-    if not at_toa:
-        spectrum.data = irradTOA2irradstar(spectrum.data)
+    # if not at_toa:
+        # spectrum.data = irradTOA2irradstar(spectrum.data)
     return spectrum
 
 
@@ -292,7 +293,6 @@ def main():
         exp_name="testing_rfmip", path="/Users/jpetersen/rare/rfmip/experiment_setups/",
     )
     create_input_data(exp_setup=exp_setup)
-    # get_site_star_distance_offset(exp_setup=exp_setup)
 
 
 if __name__ == "__main__":
