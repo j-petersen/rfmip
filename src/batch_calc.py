@@ -153,6 +153,9 @@ def dobatch_calc_agenda__disort(ws):
 
     # Calculation
     ws.DisortCalcIrradiance(nstreams=10, quiet=0, emission=ws.planck_emission)
+    ws.RadiationFieldSpectralIntegrate(
+        ws.irradiance_field, ws.f_grid, ws.spectral_irradiance_field
+    )
 
     # free fields
     ws.Touch(ws.spectral_radiance_field)
@@ -195,6 +198,9 @@ def dobatch_calc_agenda__disort_blackbody(ws):
 
     # Calculation
     ws.DisortCalcIrradiance(nstreams=10, quiet=0, emission=ws.planck_emission)
+    ws.RadiationFieldSpectralIntegrate(
+        ws.irradiance_field, ws.f_grid, ws.spectral_irradiance_field
+    )
 
     # free fields
     ws.Touch(ws.spectral_radiance_field)
@@ -238,6 +244,9 @@ def dobatch_calc_agenda__disort_spectrum(ws):
 
     # Calculation
     ws.DisortCalcIrradiance(nstreams=10, quiet=0, emission=ws.planck_emission)
+    ws.RadiationFieldSpectralIntegrate(
+        ws.irradiance_field, ws.f_grid, ws.spectral_irradiance_field
+    )
 
     # free fields
     ws.Touch(ws.spectral_radiance_field)
