@@ -214,6 +214,18 @@ def get_elevation(geo_data=None):
     return elevation
 
 
+def calculate_3D_sza(exp_setup) -> None:
+    solar_zenith_angles = pyarts.xml.load(f"{exp_setup.rfmip_path}{exp_setup.input_folder}solar_zenith_angle.xml")
+    heights = pyarts.xml.load(f"{exp_setup.rfmip_path}{exp_setup.input_folder}heights.xml")
+    star_distance = 1.495978707e11
+    earth_radius = 6.3781e6
+
+    solar_pos = np.zeros((len(solar_zenith_angles)))
+    for i, sza in enumerate(solar_zenith_angles):
+        solar_pos[i] = sza - np.rad2deg(np.arcsin((earth_radius+heights[i, -1])/star_distance * np.sin(np.deg2rad(180-sza))))
+
+    write_xml(solar_pos, "solar_pos.xml", exp_setup)
+
 def scaled_solar_spectrum(exp_setup) -> None:
     total_solar_irradiances = pyarts.xml.load(f"{exp_setup.rfmip_path}{exp_setup.input_folder}total_solar_irradiance.xml")
     gf2 = pyarts.xml.load(f"{exp_setup.arts_data_path}arts-xml-data/star/Sun/solar_spectrum_May_2004.xml")
@@ -292,7 +304,8 @@ def main():
     exp_setup = read_exp_setup(
         exp_name="testing_rfmip", path="/Users/jpetersen/rare/rfmip/experiment_setups/",
     )
-    create_input_data(exp_setup=exp_setup)
+    # create_input_data(exp_setup=exp_setup)
+    calculate_3D_sza(exp_setup)
 
 
 if __name__ == "__main__":

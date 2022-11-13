@@ -87,7 +87,7 @@ def run_arts_batch(exp_setup, verbosity=3):
         ws.gas_scattering_agenda = gas_scattering_agenda__Rayleigh
         ws.NumericCreate('solar_zenith_angle')
         ws.VectorCreate('solar_zenith_angles')
-        ws.solar_zenith_angles = pyarts.xml.load(f'{exp_setup.rfmip_path}{exp_setup.input_folder}solar_zenith_angle.xml')
+        ws.solar_zenith_angles = pyarts.xml.load(f'{exp_setup.rfmip_path}{exp_setup.input_folder}solar_pos.xml')
     
         if exp_setup.solar_type == 'BlackBody':
             ws.dobatch_calc_agenda = dobatch_calc_agenda__disort_blackbody
