@@ -57,7 +57,7 @@ def run_arts_batch(exp_setup, verbosity=3):
     ## Atmosphere
     ws.AtmosphereSet1D()
     ws.ArrayOfVectorCreate('p_grids')
-    ws.p_grids = pyarts.xml.load(f'{exp_setup.rfmip_path}{exp_setup.input_folder}pressure_layer.xml')
+    ws.p_grids = pyarts.xml.load(f'{exp_setup.rfmip_path}{exp_setup.input_folder}pressure_level.xml')
     ws.batch_atm_fields_compact = pyarts.xml.load(f'{exp_setup.rfmip_path}{exp_setup.input_folder}atm_fields.xml')
 
     species = pyarts.xml.load(f"{exp_setup.rfmip_path}{exp_setup.input_folder}species.xml")

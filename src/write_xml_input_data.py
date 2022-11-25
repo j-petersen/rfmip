@@ -31,6 +31,7 @@ def create_input_data(exp_setup) -> None:
     write_xml(data.profile_weight.values, "profil_weight.xml", exp_setup)
     write_xml(data.surface_temperature.values, "surface_temperature.xml", exp_setup)
     write_xml(data.pres_layer.values[:, ::-1], "pressure_layer.xml", exp_setup)
+    write_xml(data.pres_level.values[:, ::-1], "pressure_level.xml", exp_setup)
 
     field_names = ["T", "z"]
     spec_dict = select_species(exp_setup)
@@ -41,6 +42,7 @@ def create_input_data(exp_setup) -> None:
     arr_gf4 = pyarts.arts.ArrayOfGriddedField4()
     surface_elevation_arr = np.zeros(data.dims["site"])
     height_arr = np.zeros((data.dims["site"], data.dims["layer"]))
+    level_height = np.zeros((data.dims["site"], data.dims["level"]))
     for site in range(data.dims["site"]):
         arr = np.zeros(
             (len(field_names), len(data.isel(site=0).pres_layer.values), 1, 1)
@@ -51,6 +53,10 @@ def create_input_data(exp_setup) -> None:
             data.isel(site=site).pres_layer.values[::-1],
             data.isel(site=site).temp_layer.values[::-1],
         )
+        level_height_above_ground = ty.physics.pressure2height(
+            data.isel(site=site).pres_level.values[::-1],
+            data.isel(site=site).temp_level.values[::-1],
+        )
 
         z_elevation = get_elevation(
             [[data.isel(site=site).lat.values, data.isel(site=site).lon.values]]
@@ -59,6 +65,7 @@ def create_input_data(exp_setup) -> None:
 
         arr[1, :, 0, 0] = z_above_ground + z_elevation
         height_arr[site] = z_above_ground + z_elevation
+        level_height = level_height_above_ground + z_elevation
 
         id_offset = 2
         for i, spec in enumerate(spec_keys):
@@ -96,6 +103,7 @@ def create_input_data(exp_setup) -> None:
         arr_gf4.append(gf4)
 
     write_xml(height_arr, "heights.xml", exp_setup)
+    write_xml(level_height, "height_levels.xml", exp_setup)
     write_xml(spec_values, "species.xml", exp_setup)
     write_xml(surface_elevation_arr, "surface_altitudes.xml", exp_setup)
     write_xml(arr_gf4, "atm_fields.xml", exp_setup)
