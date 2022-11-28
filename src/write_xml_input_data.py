@@ -4,6 +4,7 @@ import requests
 import numpy as np
 import typhon as ty
 import pandas as pd
+import matplotlib.pyplot as plt
 from scipy import interpolate
 from urllib.request import urlretrieve
 
@@ -32,81 +33,10 @@ def create_input_data(exp_setup) -> None:
     write_xml(data.surface_temperature.values, "surface_temperature.xml", exp_setup)
     write_xml(data.pres_layer.values[:, ::-1], "pressure_layer.xml", exp_setup)
     write_xml(data.pres_level.values[:, ::-1], "pressure_level.xml", exp_setup)
+    write_xml(data.temp_level.values[:, ::-1], "temperature_level.xml", exp_setup)
+    write_xml(data.temp_layer.values[:, ::-1], "temperature_layer.xml", exp_setup)
 
-    field_names = ["T", "z"]
-    spec_dict = select_species(exp_setup)
-    spec_values = [spec_dict[key] for key in spec_dict if spec_dict[key] is not None]
-    spec_keys = [key for key in spec_dict if spec_dict[key] is not None]
-    field_names += spec_values
-
-    arr_gf4 = pyarts.arts.ArrayOfGriddedField4()
-    surface_elevation_arr = np.zeros(data.dims["site"])
-    height_arr = np.zeros((data.dims["site"], data.dims["layer"]))
-    level_height = np.zeros((data.dims["site"], data.dims["level"]))
-    for site in range(data.dims["site"]):
-        arr = np.zeros(
-            (len(field_names), len(data.isel(site=0).pres_layer.values), 1, 1)
-        )
-        arr[0, :, 0, 0] = data.isel(site=site).temp_layer.values[::-1]
-
-        z_above_ground = ty.physics.pressure2height(
-            data.isel(site=site).pres_layer.values[::-1],
-            data.isel(site=site).temp_layer.values[::-1],
-        )
-        level_height_above_ground = ty.physics.pressure2height(
-            data.isel(site=site).pres_level.values[::-1],
-            data.isel(site=site).temp_level.values[::-1],
-        )
-
-        z_elevation = get_elevation(
-            [[data.isel(site=site).lat.values, data.isel(site=site).lon.values]]
-        )
-        surface_elevation_arr[site] = z_elevation
-
-        arr[1, :, 0, 0] = z_above_ground + z_elevation
-        height_arr[site] = z_above_ground + z_elevation
-        level_height = level_height_above_ground + z_elevation
-
-        id_offset = 2
-        for i, spec in enumerate(spec_keys):
-            if np.shape(data.isel(site=site)[spec].values) == ():
-                arr[i + id_offset, :, 0, 0] = np.tile(
-                    data.isel(site=site)[spec].values
-                    * np.float64(data.isel(site=site)[spec].attrs["units"]),
-                    data.dims["layer"],
-                ).astype(np.float64)
-            else:
-                arr[i + id_offset, :, 0, 0] = (
-                    (
-                        data.isel(site=site)[spec].values
-                        * np.float64(data.isel(site=site)[spec].attrs["units"])
-                    )
-                    .reshape(data.dims["layer"])
-                    .astype(np.float64)
-                )[::-1]
-
-        gf4 = pyarts.arts.GriddedField4(
-            grids=[
-                field_names,
-                data.isel(site=site)
-                .pres_layer.values.reshape(data.dims["layer"])
-                .astype(np.float64)[::-1],
-                [],
-                # data.isel(site=site).lat.values.reshape(1).astype(np.float64),
-                []
-                # data.isel(site=site).lon.values.reshape(1).astype(np.float64)
-            ],
-            data=arr,
-            gridnames=["field_names", "p_grid", "lat_grid", "lon_grid"],
-            name=f"site_{site}",
-        )
-        arr_gf4.append(gf4)
-
-    write_xml(height_arr, "heights.xml", exp_setup)
-    write_xml(level_height, "height_levels.xml", exp_setup)
-    write_xml(spec_values, "species.xml", exp_setup)
-    write_xml(surface_elevation_arr, "surface_altitudes.xml", exp_setup)
-    write_xml(arr_gf4, "atm_fields.xml", exp_setup)
+    write_AtmFieldCompact(exp_setup=exp_setup, data=data)
 
 
 def readin_nc(filename, fields=None):
@@ -125,6 +55,7 @@ def fetch_official_rfmip_data(exp_setup, rfmip_data_name):
     "fetches the original rfmip data if its not already present."
     filename = f"{exp_setup.rfmip_path}input/{rfmip_data_name}"
     if os.path.exists(filename):
+        print("original data is already present")
         return
 
     url = (
@@ -202,6 +133,103 @@ def species_name_mapping() -> dict:
         "so2f2_GM": "abs_species-SO2F2",
     }
     return name_map
+
+
+def interpolate_data_on_lvl(spec_field, site, spec, exp_setup):
+    pres_layer = pyarts.xml.load(f"{exp_setup.rfmip_path}{exp_setup.input_folder}pressure_layer.xml")[site, ::-1]
+    pres_lvl = pyarts.xml.load(f"{exp_setup.rfmip_path}{exp_setup.input_folder}pressure_level.xml")[site, ::-1]
+
+    f = interpolate.interp1d(np.log(pres_layer), spec_field[::-1], kind='linear', fill_value="extrapolate")
+    interp_spec_field = f(np.log(pres_lvl))[::-1]
+    interp_spec_field[interp_spec_field < 0] = 0
+
+    # ty.plots.styles.use(['typhon', 'typhon-dark'])
+    # fig, ax = plt.subplots(figsize=(12, 9))
+    
+    # ax.plot(spec_field, pres_layer[::-1], label='raw')
+    # ax.plot(interp_spec_field, pres_lvl[::-1], label='interp')
+    
+    # ax.set_xlabel('spec')
+    # ax.set_ylabel('pressure')
+    
+    # ax.legend(frameon=False)
+    # fig.savefig(f'/Users/jpetersen/rare/rfmip/plots/analysis/interp/interp_site_{site}_{spec}.png', dpi=200)
+    # plt.close("all")
+
+    return interp_spec_field
+
+
+def write_AtmFieldCompact(exp_setup, data):
+    field_names = ["T", "z"]
+    spec_dict = select_species(exp_setup)
+    spec_values = [spec_dict[key] for key in spec_dict if spec_dict[key] is not None]
+    spec_keys = [key for key in spec_dict if spec_dict[key] is not None]
+    field_names += spec_values  
+
+    arr_gf4 = pyarts.arts.ArrayOfGriddedField4()
+    surface_elevation_arr = np.zeros(data.dims["site"])
+    level_height = np.zeros((data.dims["site"], data.dims["level"]))
+    
+    for site in range(data.dims["site"]):
+        arr = np.zeros(
+            (len(field_names), data.dims["level"], 1, 1)
+        )
+        arr[0, :, 0, 0] = data.isel(site=site).temp_level.values[::-1]
+
+        z_levels = ty.physics.pressure2height(
+            data.isel(site=site).pres_level.values[::-1],
+            data.isel(site=site).temp_level.values[::-1],
+        )
+
+        z_elevation = get_elevation(
+            [[data.isel(site=site).lat.values, data.isel(site=site).lon.values]]
+        )
+        surface_elevation_arr[site] = z_elevation
+
+        arr[1, :, 0, 0] = z_levels + z_elevation
+        level_height[site] = z_levels + z_elevation
+
+        id_offset = 2
+        for i, spec in enumerate(spec_keys):
+            if np.shape(data.isel(site=site)[spec].values) == ():
+                spec_field = np.tile(
+                    data.isel(site=site)[spec].values
+                    * np.float64(data.isel(site=site)[spec].attrs["units"]),
+                    data.dims["level"],
+                ).astype(np.float64)
+            else:
+                spec_field_raw = (
+                    (
+                        data.isel(site=site)[spec].values
+                        * np.float64(data.isel(site=site)[spec].attrs["units"])
+                    )
+                    .reshape(data.dims["layer"])
+                    .astype(np.float64)
+                )[::-1]
+                spec_field = interpolate_data_on_lvl(spec_field_raw, site, spec, exp_setup=exp_setup)
+
+            arr[i + id_offset, :, 0, 0] = spec_field
+        gf4 = pyarts.arts.GriddedField4(
+            grids=[
+                field_names,
+                data.isel(site=site)
+                .pres_level.values.reshape(data.dims["level"])
+                .astype(np.float64)[::-1],
+                [],
+                # data.isel(site=site).lat.values.reshape(1).astype(np.float64),
+                []
+                # data.isel(site=site).lon.values.reshape(1).astype(np.float64)
+            ],
+            data=arr,
+            gridnames=["field_names", "p_grid", "lat_grid", "lon_grid"],
+            name=f"site_{site}",
+        )
+        arr_gf4.append(gf4)
+
+    write_xml(level_height, "height_levels.xml", exp_setup)
+    write_xml(spec_values, "species.xml", exp_setup)
+    write_xml(surface_elevation_arr, "surface_altitudes.xml", exp_setup)
+    write_xml(arr_gf4, "atm_fields.xml", exp_setup)
 
 
 # script for returning elevation from lat, long, based on open elevation data
