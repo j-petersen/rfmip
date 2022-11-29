@@ -36,6 +36,10 @@ def create_input_data(exp_setup) -> None:
     write_xml(data.temp_level.values[:, ::-1], "temperature_level.xml", exp_setup)
     write_xml(data.temp_layer.values[:, ::-1], "temperature_layer.xml", exp_setup)
 
+    pos = np.zeros((data.dims["site"], 2)) 
+    pos[:, 0], pos[:, 1] = data.lat.values, data.lon.values
+    write_xml(pos, "site_pos.xml", exp_setup)
+
     write_AtmFieldCompact(exp_setup=exp_setup, data=data)
 
 
