@@ -25,7 +25,6 @@ def create_input_data(exp_setup) -> None:
     sensor_pos = np.stack((data.lat.values, data.lon.values), axis=-1)
     write_xml(sensor_pos, "sensor_pos.xml", exp_setup)
     write_xml(data.solar_zenith_angle.values, "solar_zenith_angle.xml", exp_setup)
-    calculate_3D_sza(exp_setup=exp_setup)
     write_xml(data.total_solar_irradiance.values, "total_solar_irradiance.xml", exp_setup)
     scaled_solar_spectrum(exp_setup=exp_setup)
     write_xml(data.surface_albedo.values, "surface_albedo.xml", exp_setup)
@@ -39,8 +38,12 @@ def create_input_data(exp_setup) -> None:
     pos = np.zeros((data.dims["site"], 2)) 
     pos[:, 0], pos[:, 1] = data.lat.values, data.lon.values
     write_xml(pos, "site_pos.xml", exp_setup)
-
-    write_AtmFieldCompact(exp_setup=exp_setup, data=data)
+    if exp_setup.name == 'rfmip_lvl':
+        write_AtmFieldCompact_highres(exp_setup=exp_setup, data=data)
+    else:
+        write_AtmFieldCompact(exp_setup=exp_setup, data=data)
+    
+    calculate_3D_sza(exp_setup=exp_setup)
 
 
 def readin_nc(filename, fields=None):
@@ -143,8 +146,14 @@ def interpolate_data_on_lvl(spec_field, site, spec, exp_setup):
     pres_layer = pyarts.xml.load(f"{exp_setup.rfmip_path}{exp_setup.input_folder}pressure_layer.xml")[site, ::-1]
     pres_lvl = pyarts.xml.load(f"{exp_setup.rfmip_path}{exp_setup.input_folder}pressure_level.xml")[site, ::-1]
 
+    pres_high_res = np.zeros((len(pres_lvl) + len(pres_layer)))
+    pres_high_res[::2] = pres_lvl
+    pres_high_res[1::2] = pres_layer
+
+    new_p_grid = pres_high_res if exp_setup.name == 'rfmip_lvl' else pres_lvl
+
     f = interpolate.interp1d(np.log(pres_layer), spec_field[::-1], kind='linear', fill_value="extrapolate")
-    interp_spec_field = f(np.log(pres_lvl))[::-1]
+    interp_spec_field = f(np.log(new_p_grid))[::-1]
     interp_spec_field[interp_spec_field < 0] = 0
 
     # ty.plots.styles.use(['typhon', 'typhon-dark'])
@@ -236,6 +245,82 @@ def write_AtmFieldCompact(exp_setup, data):
     write_xml(arr_gf4, "atm_fields.xml", exp_setup)
 
 
+def write_AtmFieldCompact_highres(exp_setup, data):
+    field_names = ["T", "z"]
+    spec_dict = select_species(exp_setup)
+    spec_values = [spec_dict[key] for key in spec_dict if spec_dict[key] is not None]
+    spec_keys = [key for key in spec_dict if spec_dict[key] is not None]
+    field_names += spec_values  
+
+    arr_gf4 = pyarts.arts.ArrayOfGriddedField4()
+    surface_elevation_arr = np.zeros(data.dims["site"])
+    n_lvl = data.dims["level"]+data.dims['layer']
+    level_height = np.zeros((data.dims["site"], n_lvl))
+    pressure = np.zeros((n_lvl))
+
+    for site in range(data.dims["site"]):
+        arr = np.zeros(
+            (len(field_names), n_lvl, 1, 1)
+        )
+        arr[0, ::2, 0, 0] = data.isel(site=site).temp_level.values[::-1]
+        arr[0, 1::2, 0, 0] = data.isel(site=site).temp_layer.values[::-1]
+
+        pressure[::2] = data.isel(site=site).pres_level.values[::-1]
+        pressure[1::2] = data.isel(site=site).pres_layer.values[::-1]
+
+        z_levels = ty.physics.pressure2height(
+            pressure,
+            arr[0, :, 0, 0],
+        )
+
+        z_elevation = get_elevation(
+            [[data.isel(site=site).lat.values, data.isel(site=site).lon.values]]
+        )
+        surface_elevation_arr[site] = z_elevation
+
+        arr[1, :, 0, 0] = z_levels + z_elevation
+        level_height[site] = z_levels + z_elevation
+
+        id_offset = 2
+        for i, spec in enumerate(spec_keys):
+            if np.shape(data.isel(site=site)[spec].values) == ():
+                spec_field = np.tile(
+                    data.isel(site=site)[spec].values
+                    * np.float64(data.isel(site=site)[spec].attrs["units"]),
+                    n_lvl,
+                ).astype(np.float64)
+            else:
+                spec_field_raw = (
+                    (
+                        data.isel(site=site)[spec].values
+                        * np.float64(data.isel(site=site)[spec].attrs["units"])
+                    )
+                    .reshape(data.dims["layer"])
+                    .astype(np.float64)
+                )[::-1]
+                spec_field = interpolate_data_on_lvl(spec_field_raw, site, spec, exp_setup=exp_setup)
+
+            arr[i + id_offset, :, 0, 0] = spec_field
+        gf4 = pyarts.arts.GriddedField4(
+            grids=[
+                field_names,
+                pressure,
+                [],
+                # data.isel(site=site).lat.values.reshape(1).astype(np.float64),
+                []
+                # data.isel(site=site).lon.values.reshape(1).astype(np.float64)
+            ],
+            data=arr,
+            gridnames=["field_names", "p_grid", "lat_grid", "lon_grid"],
+            name=f"site_{site}",
+        )
+        arr_gf4.append(gf4)
+    write_xml(level_height, "height_levels.xml", exp_setup)
+    write_xml(spec_values, "species.xml", exp_setup)
+    write_xml(surface_elevation_arr, "surface_altitudes.xml", exp_setup)
+    write_xml(arr_gf4, "atm_fields.xml", exp_setup)
+
+
 # script for returning elevation from lat, long, based on open elevation data
 # which in turn is based on SRTM
 # https://stackoverflow.com/questions/19513212/can-i-get-the-altitude-with-geopy-in-python-with-longitude-latitude
@@ -257,7 +342,7 @@ def get_elevation(geo_data=None):
 
 def calculate_3D_sza(exp_setup) -> None:
     solar_zenith_angles = pyarts.xml.load(f"{exp_setup.rfmip_path}{exp_setup.input_folder}solar_zenith_angle.xml")
-    heights = pyarts.xml.load(f"{exp_setup.rfmip_path}{exp_setup.input_folder}heights.xml")
+    heights = pyarts.xml.load(f"{exp_setup.rfmip_path}{exp_setup.input_folder}height_levels.xml")
     star_distance = 1.495978707e11
     earth_radius = 6.3781e6
 
@@ -343,7 +428,7 @@ def f_grid_from_spectral_grid(exp_setup):
 
 def main():
     exp_setup = read_exp_setup(
-        exp_name="testing_rfmip", path="/Users/jpetersen/rare/rfmip/experiment_setups/",
+        exp_name="rfmip_lvl", path="/Users/jpetersen/rare/rfmip/experiment_setups/",
     )
     create_input_data(exp_setup=exp_setup)
     # calculate_3D_sza(exp_setup)
