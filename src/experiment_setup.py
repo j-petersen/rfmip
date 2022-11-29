@@ -179,6 +179,42 @@ def rfmip_no_star_setup():
     )
     exp.save()
 
+def rfmip_star_fgrid_setup():
+    exp = ExperimentSetup(
+        name='rfmip_star_f_grid',
+        description='rfmip with the f_grid given by the reference solar spectra.',
+        rfmip_path='/work/um0878/users/jpetersen/rfmip/',
+        input_folder='input/rfmip/',
+        arts_data_path='/work/um0878/users/jpetersen/',
+        lookuptable='rfmip.xml',
+        solar_type='None',
+        planck_emission='0',
+        which_spectral_grid='wavelength',
+        spectral_grid={'min': 115.5, 'max': 99_999.5, 'n': 99885},
+        species=['all'],
+        angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'},
+        h2o="H2O, H2O-SelfContCKDMT320, H2O-ForeignContCKDMT320"
+    )
+    exp.save()
+
+def rfmip_no_star_setup():
+    exp = ExperimentSetup(
+        name='rfmip_lvl',
+        description='rfmip but with a high resolution vertical resolution',
+        rfmip_path='/work/um0878/users/jpetersen/rfmip/',
+        input_folder='input/rfmip/',
+        arts_data_path='/work/um0878/users/jpetersen/',
+        lookuptable='rfmip.xml',
+        solar_type='None',
+        planck_emission='0',
+        which_spectral_grid='wavelength',
+        spectral_grid={'min': 115.5, 'max': 9_999.5, 'n': 2**15},
+        species=['all'],
+        angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'},
+        h2o="H2O, H2O-SelfContCKDMT320, H2O-ForeignContCKDMT320"
+    )
+    exp.save()
+
 def rfmip_no_emission_setup():
     exp = ExperimentSetup(
         name='rfmip_no_emission',
