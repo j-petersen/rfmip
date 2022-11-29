@@ -84,7 +84,7 @@ def test_setup():
         spectral_grid={'min': 380, 'max': 780, 'n': 21},
         species=['water_vapor', 'ozone', 'carbon_dioxide_GM', 'nitrous_oxide_GM'],
         angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'},
-        h2o="H2O, H2O-SelfContCKDMT320, H2O-ForeignContCKDMT320"
+        h2o="H2O, H2O-SelfContCKDMT350, H2O-ForeignContCKDMT350"
     )
     exp.save()
 
@@ -102,7 +102,7 @@ def testing_rfmip_setup():
         spectral_grid={'min': 115.5, 'max': 9_999.5, 'n': 2**10},
         species=['all'],
         angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'},
-        h2o="H2O, H2O-SelfContCKDMT320, H2O-ForeignContCKDMT320"
+        h2o="H2O, H2O-SelfContCKDMT350, H2O-ForeignContCKDMT350"
     )
     exp.save()
 
@@ -121,7 +121,7 @@ def olr_setup():
         spectral_grid={'min': 1, 'max': 2500, 'n': 1000},
         species=['water_vapor', 'ozone', 'carbon_dioxide_GM', 'nitrous_oxide_GM'],
         angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'},
-        h2o="H2O, H2O-SelfContCKDMT320, H2O-ForeignContCKDMT320"
+        h2o="H2O, H2O-SelfContCKDMT350, H2O-ForeignContCKDMT350"
     )
     exp.save()
 
@@ -139,7 +139,7 @@ def solar_angle_dependency_setup():
         spectral_grid={'min': 380, 'max': 780, 'n': 12},
         species=['water_vapor', 'ozone', 'carbon_dioxide_GM', 'methane_GM', 'nitrous_oxide_GM'],
         angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'},
-        h2o="H2O, H2O-SelfContCKDMT320, H2O-ForeignContCKDMT320"
+        h2o="H2O, H2O-SelfContCKDMT350, H2O-ForeignContCKDMT350"
     )
     exp.save()
 
@@ -157,7 +157,7 @@ def rfmip_setup():
         spectral_grid={'min': 115.5, 'max': 9_999.5, 'n': 2**15},
         species=['all'],
         angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'},
-        h2o="H2O, H2O-SelfContCKDMT320, H2O-ForeignContCKDMT320"
+        h2o="H2O, H2O-SelfContCKDMT350, H2O-ForeignContCKDMT350"
     )
     exp.save()
 
@@ -175,7 +175,7 @@ def rfmip_no_star_setup():
         spectral_grid={'min': 115.5, 'max': 9_999.5, 'n': 2**15},
         species=['all'],
         angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'},
-        h2o="H2O, H2O-SelfContCKDMT320, H2O-ForeignContCKDMT320"
+        h2o="H2O, H2O-SelfContCKDMT350, H2O-ForeignContCKDMT350"
     )
     exp.save()
 
@@ -193,7 +193,7 @@ def rfmip_star_fgrid_setup():
         spectral_grid={'min': 115.5, 'max': 99_999.5, 'n': 99885},
         species=['all'],
         angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'},
-        h2o="H2O, H2O-SelfContCKDMT320, H2O-ForeignContCKDMT320"
+        h2o="H2O, H2O-SelfContCKDMT350, H2O-ForeignContCKDMT350"
     )
     exp.save()
 
@@ -211,7 +211,7 @@ def rfmip_lvl_setup():
         spectral_grid={'min': 115.5, 'max': 9_999.5, 'n': 2**15},
         species=['all'],
         angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'},
-        h2o="H2O, H2O-SelfContCKDMT320, H2O-ForeignContCKDMT320"
+        h2o="H2O, H2O-SelfContCKDMT350, H2O-ForeignContCKDMT350"
     )
     exp.save()
 
@@ -229,7 +229,7 @@ def rfmip_no_emission_setup():
         spectral_grid={'min': 115.5, 'max': 9_999.5, 'n': 2**15},
         species=['all'],
         angular_grid={'N_za_grid': 20, 'N_aa_grid': 41, 'za_grid_type': 'linear_mu'},
-        h2o="H2O, H2O-SelfContCKDMT320, H2O-ForeignContCKDMT320"
+        h2o="H2O, H2O-SelfContCKDMT350, H2O-ForeignContCKDMT350"
     )
     exp.save()
 
