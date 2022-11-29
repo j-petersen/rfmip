@@ -66,6 +66,7 @@ class BatchLookUpTable():
 
         self.ws.abs_lines_per_speciesCutoff(option='ByLine', value=750e9)
         self.ws.abs_lines_per_speciesCompact()
+        self.ws.abs_lines_per_speciesTurnOffLineMixing()
 
         self.ws.propmat_clearsky_agendaAuto()
 
