@@ -35,7 +35,7 @@ def calc_luts(exp_setup, n_chunks=8):
             with FileNotFoundError as e:
                 e.args = (f"The experiment '{exp}' does not exist in the experiment_setups folder!",)
                 raise e
-        for i in range(nchunks):
+        for i in range(n_chunks):
             command = f"python3 src/batch_lookuptable.py -e {exp} -c {n_chunks} {i}"
             shell_command = (
                 f"{SBATCHSCRIPT} {PARTITION} lut{i}_{exp} {NCORES} {TIMELIMIT} {command}"
@@ -60,10 +60,10 @@ def combine_luts(exp_setup, n_chunks=8):
         os.system(command=shell_command)
 
 def main():
-    exp_setups = ['rfmip', 'rfmip_no_star', 'rfmip_no_emission']
-    calc_luts(exp_setup=exp_setups[0], n_chunks=32)
-    combine_luts(exp_setup=exp_setups[0], n_chunks=32)
-    run_experiments(exp_setup=exp_setups)
+    exp_setups = ['rfmip'] #, 'rfmip_no_star', 'rfmip_no_emission']
+    calc_luts(exp_setup=exp_setups[0], n_chunks=16)
+    # combine_luts(exp_setup=exp_setups[0], n_chunks=16)
+    # run_experiments(exp_setup=exp_setups)
 
 
 if __name__ == "__main__":
