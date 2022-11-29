@@ -197,7 +197,7 @@ def rfmip_star_fgrid_setup():
     )
     exp.save()
 
-def rfmip_no_star_setup():
+def rfmip_lvl_setup():
     exp = ExperimentSetup(
         name='rfmip_lvl',
         description='rfmip but with a high resolution vertical resolution',
@@ -242,6 +242,8 @@ def main():
     rfmip_setup()
     rfmip_no_star_setup()
     rfmip_no_emission_setup()
+    rfmip_star_fgrid_setup()
+    rfmip_lvl_setup()
 
 
 if __name__ == '__main__':

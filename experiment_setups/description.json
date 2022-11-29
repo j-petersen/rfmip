@@ -21,5 +21,6 @@
   "N_aa_grid": "Number of azimuth angles: recommended 41",
   "za_grid_type": "Zenith angle grid type: linear, linear_mu or double_gauss"
  },
+ "h2o": "choose which water vapor continua to include",
  "savename": "/Users/jpetersen/rare/rfmip/experiment_setups/description.json"
 }

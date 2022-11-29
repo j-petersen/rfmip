@@ -5,7 +5,7 @@
  "spectral_grid": {
   "min": 1,
   "max": 2500,
-  "n": 100
+  "n": 1000
  },
  "species": [
   "water_vapor",
@@ -13,9 +13,9 @@
   "carbon_dioxide_GM",
   "nitrous_oxide_GM"
  ],
- "rfmip_path": "/Users/jpetersen/rare/rfmip/",
+ "rfmip_path": "/Users/froemer/Documents/wv_continuum/rfmip/",
  "input_folder": "input/olr/",
- "arts_data_path": "/Users/jpetersen/rare/",
+ "arts_data_path": "/Users/froemer/Documents/",
  "lookuptable": "olr.xml",
  "solar_type": "None",
  "planck_emission": "1",
@@ -24,5 +24,6 @@
   "N_aa_grid": 41,
   "za_grid_type": "linear_mu"
  },
+ "h2o": "H2O, H2O-SelfContCKDMT320, H2O-ForeignContCKDMT320",
  "savename": "/Users/jpetersen/rare/rfmip/experiment_setups/olr.json"
 }

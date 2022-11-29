@@ -1,11 +1,11 @@
 {
- "name": "rfmip_no_star",
- "description": "rfmip but without a star. (check the effect of planck emission on the flux)",
+ "name": "rfmip_star_f_grid",
+ "description": "rfmip with the f_grid given by the reference solar spectra.",
  "which_spectral_grid": "wavelength",
  "spectral_grid": {
   "min": 115.5,
-  "max": 9999.5,
-  "n": 32768
+  "max": 99999.5,
+  "n": 99885
  },
  "species": [
   "all"
@@ -15,12 +15,12 @@
  "arts_data_path": "/work/um0878/users/jpetersen/",
  "lookuptable": "rfmip.xml",
  "solar_type": "None",
- "planck_emission": "1",
+ "planck_emission": "0",
  "angular_grid": {
   "N_za_grid": 20,
   "N_aa_grid": 41,
   "za_grid_type": "linear_mu"
  },
  "h2o": "H2O, H2O-SelfContCKDMT320, H2O-ForeignContCKDMT320",
- "savename": "/Users/jpetersen/rare/rfmip/experiment_setups/rfmip_no_star.json"
+ "savename": "/Users/jpetersen/rare/rfmip/experiment_setups/rfmip_star_f_grid.json"
 }
