@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from read_netcdf import read_netcdf
 
 def main():
+    ty.plots.styles.use(['typhon'])
     solar_const = get_data()
     plot_solar_const(solar_const)
     plt.show()
@@ -26,7 +27,7 @@ def get_data():
             toa = data.rsd.values[:, -1]
         solar_const.append(reduce_by_solarangle(toa))
 
-    data = np.squeeze(pyarts.xml.load('/Users/jpetersen/rare/rfmip/output/rfmip/irradiance.xml'))
+    data = np.squeeze(pyarts.xml.load('/Users/jpetersen/rare/rfmip/output/rfmip_no_emission/irradiance.xml'))
 
     toa = data[:, -1, 0]*-1
     
@@ -43,7 +44,6 @@ def get_data():
 def plot_solar_const(solar_const):
 
     tsi = pyarts.xml.load('/Users/jpetersen/rare/rfmip/input/rfmip/total_solar_irradiance.xml')
-    ty.plots.styles.use(['typhon', 'typhon-dark'])
     fig, ax = plt.subplots(figsize=(12, 9))
 
     ax.scatter(np.arange(len(solar_const[0])), tsi-solar_const[0], marker='x', label="LBLRTM")

@@ -19,7 +19,7 @@ def filename_of_model(model, direction='downward'):
         else:
             f = '/Users/jpetersen/rare/rfmip/analysis/data/rsu_Efx_RRTMG-SW-4-02_rad-irf_r1i1p1f1_gn.nc'
     elif model == 'ARTS':
-        f = '/Users/jpetersen/rare/rfmip/output/rfmip/irradiance.xml'
+        f = '/Users/jpetersen/rare/rfmip/output/rfmip_no_emission/irradiance.xml'
     else: 
         print("There is not such a model!")
     return f
@@ -30,24 +30,21 @@ def get_data(models, direction='downward', lvl=0, site=slice(0, 100, None)):
     data_dict = {}
     for model in models:
         if model != 'ARTS':
-            data = readin_nc(filename_of_model(model))
+            data = readin_nc(filename_of_model(model, direction))
             data = data.isel(expt=0)
-            if model == 'LBLRTM':
-                if direction == 'downward':
-                    data.rsd.values == data.rsd.values[:, ::-1]
-                else: 
-                    data.rsu.values == data.rsu.values[:, ::-1]
             if direction == 'downward':
-                irrad = data.rsd.values[site, lvl]
+                irrad = data.rsd.values
             else:
-                irrad = data.rsu.values[site, lvl]
+                irrad = data.rsu.values
 
+            if model == 'LBLRTM':
+                irrad = irrad[:, ::-1]
         else: 
-            data = np.squeeze(pyarts.xml.load('/Users/jpetersen/rare/rfmip/output/rfmip/irradiance.xml'))
-            irrad = data[site, lvl, 0]*-1 if direction == 'downward' else data[:, :, 1]
+            data = np.squeeze(pyarts.xml.load(filename_of_model(model)))
+            irrad = data[:, :, 0]*-1 if direction == 'downward' else data[:, :, 1]
             irrad = np.array(irrad)
 
-        data_dict[model] = np.squeeze(irrad)
+        data_dict[model] = np.squeeze(irrad[site, lvl])
 
     return data_dict
 
