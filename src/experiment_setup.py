@@ -186,7 +186,7 @@ def rfmip_star_fgrid_setup():
         rfmip_path='/work/um0878/users/jpetersen/rfmip/',
         input_folder='input/rfmip/',
         arts_data_path='/work/um0878/users/jpetersen/',
-        lookuptable='rfmip.xml',
+        lookuptable='rfmip_star_fgrid.xml',
         solar_type='None',
         planck_emission='0',
         which_spectral_grid='wavelength',
