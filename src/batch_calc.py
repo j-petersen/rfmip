@@ -101,10 +101,6 @@ def run_arts_batch(exp_setup, verbosity=3):
     # set planck emission
     ws.planck_emission = int(exp_setup.planck_emission)
 
-    # set angular grid
-    ws.AngularGridsSetFluxCalc(N_za_grid=exp_setup.angular_grid['N_za_grid'], N_aa_grid=exp_setup.angular_grid['N_aa_grid'], za_grid_type=exp_setup.angular_grid['za_grid_type'])
-    ws.aa_grid.value += 180. # disort goes from 0 t0 360 
-
     ws.sensor_checkedCalc()
 
     ws.ybatch_start = 0
