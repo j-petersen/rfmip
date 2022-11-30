@@ -316,6 +316,7 @@ def write_AtmFieldCompact_highres(exp_setup, data):
         )
         arr_gf4.append(gf4)
     write_xml(level_height, "height_levels.xml", exp_setup)
+    write_xml(pressure, "pressure_level.xml", exp_setup)
     write_xml(spec_values, "species.xml", exp_setup)
     write_xml(surface_elevation_arr, "surface_altitudes.xml", exp_setup)
     write_xml(arr_gf4, "atm_fields.xml", exp_setup)
