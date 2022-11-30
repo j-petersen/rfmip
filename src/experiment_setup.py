@@ -202,7 +202,7 @@ def rfmip_lvl_setup():
         name='rfmip_lvl',
         description='rfmip but with a high resolution vertical resolution',
         rfmip_path='/work/um0878/users/jpetersen/rfmip/',
-        input_folder='input/rfmip/',
+        input_folder='input/rfmip_lvl/',
         arts_data_path='/work/um0878/users/jpetersen/',
         lookuptable='rfmip.xml',
         solar_type='None',
