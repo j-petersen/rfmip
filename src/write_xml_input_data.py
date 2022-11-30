@@ -256,7 +256,7 @@ def write_AtmFieldCompact_highres(exp_setup, data):
     surface_elevation_arr = np.zeros(data.dims["site"])
     n_lvl = data.dims["level"]+data.dims['layer']
     level_height = np.zeros((data.dims["site"], n_lvl))
-    pressure = np.zeros((n_lvl))
+    pressure = np.zeros((data.dims["site"], n_lvl))
 
     for site in range(data.dims["site"]):
         arr = np.zeros(
@@ -265,11 +265,11 @@ def write_AtmFieldCompact_highres(exp_setup, data):
         arr[0, ::2, 0, 0] = data.isel(site=site).temp_level.values[::-1]
         arr[0, 1::2, 0, 0] = data.isel(site=site).temp_layer.values[::-1]
 
-        pressure[::2] = data.isel(site=site).pres_level.values[::-1]
-        pressure[1::2] = data.isel(site=site).pres_layer.values[::-1]
+        pressure[site, ::2] = data.isel(site=site).pres_level.values[::-1]
+        pressure[site, 1::2] = data.isel(site=site).pres_layer.values[::-1]
 
         z_levels = ty.physics.pressure2height(
-            pressure,
+            pressure[site],
             arr[0, :, 0, 0],
         )
 
@@ -304,7 +304,7 @@ def write_AtmFieldCompact_highres(exp_setup, data):
         gf4 = pyarts.arts.GriddedField4(
             grids=[
                 field_names,
-                pressure,
+                pressure[site],
                 [],
                 # data.isel(site=site).lat.values.reshape(1).astype(np.float64),
                 []
