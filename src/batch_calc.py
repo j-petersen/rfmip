@@ -156,7 +156,7 @@ def dobatch_calc_agenda__disort(ws):
     )
 
     # free fields
-    ws.Delete(ws.spectral_radiance_field)
+    ws.Delete(ws.spectral_irradiance_field)
     ws.Touch(ws.spectral_radiance_field)
     ws.Touch(ws.radiance_field)
     ws.Touch(ws.cloudbox_field)
@@ -202,7 +202,7 @@ def dobatch_calc_agenda__disort_blackbody(ws):
     )
 
     # free fields
-    ws.Delete(ws.spectral_radiance_field)
+    ws.Delete(ws.spectral_irradiance_field)
     ws.Touch(ws.spectral_radiance_field)
     ws.Touch(ws.radiance_field)
     ws.Touch(ws.cloudbox_field)
@@ -249,7 +249,7 @@ def dobatch_calc_agenda__disort_spectrum(ws):
     )
 
     # free fields
-    ws.Delete(ws.spectral_radiance_field)
+    ws.Delete(ws.spectral_irradiance_field)
     ws.Touch(ws.spectral_radiance_field)
     ws.Touch(ws.radiance_field)
     ws.Touch(ws.cloudbox_field)
