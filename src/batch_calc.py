@@ -12,6 +12,8 @@ def run_arts_batch(exp_setup, verbosity=3):
 
     ws = pyarts.workspace.Workspace(verbosity=verbosity)
     
+    ws.SetNumberOfThreads(10)
+    
     ws.PlanetSet(option="Earth")
 
     ws.IndexCreate('planck_emission')
@@ -115,7 +117,7 @@ def run_arts_batch(exp_setup, verbosity=3):
     
     print('saving')
     ws.WriteXML('binary', ws.dobatch_spectral_irradiance_field, f'{exp_setup.rfmip_path}output/{exp_setup.name}/spectral_irradiance.xml')
-    ws.WriteXML('binary', ws.dobatch_irradiance_field, f'{exp_setup.rfmip_path}output/{exp_setup.name}/irradiance.xml')
+    # ws.WriteXML('binary', ws.dobatch_irradiance_field, f'{exp_setup.rfmip_path}output/{exp_setup.name}/irradiance.xml')
 
 
 @pyarts.workspace.arts_agenda(allow_callbacks=False)
@@ -154,10 +156,11 @@ def dobatch_calc_agenda__disort(ws):
     )
 
     # free fields
+    ws.Delete(ws.spectral_radiance_field)
     ws.Touch(ws.spectral_radiance_field)
     ws.Touch(ws.radiance_field)
     ws.Touch(ws.cloudbox_field)
-    ws.Touch(ws.irradiance_field)
+    # ws.Touch(ws.irradiance_field)
 
 
 @pyarts.workspace.arts_agenda(allow_callbacks=False)
@@ -199,10 +202,11 @@ def dobatch_calc_agenda__disort_blackbody(ws):
     )
 
     # free fields
+    ws.Delete(ws.spectral_radiance_field)
     ws.Touch(ws.spectral_radiance_field)
     ws.Touch(ws.radiance_field)
     ws.Touch(ws.cloudbox_field)
-    ws.Touch(ws.irradiance_field)
+    # ws.Touch(ws.irradiance_field)
 
 
 @pyarts.workspace.arts_agenda(allow_callbacks=False)
@@ -245,10 +249,11 @@ def dobatch_calc_agenda__disort_spectrum(ws):
     )
 
     # free fields
+    ws.Delete(ws.spectral_radiance_field)
     ws.Touch(ws.spectral_radiance_field)
     ws.Touch(ws.radiance_field)
     ws.Touch(ws.cloudbox_field)
-    ws.Touch(ws.irradiance_field)
+    # ws.Touch(ws.irradiance_field)
     
 
 #gas scattering agenda
