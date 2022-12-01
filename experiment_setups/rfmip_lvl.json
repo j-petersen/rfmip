@@ -14,7 +14,7 @@
  "input_folder": "input/rfmip_lvl/",
  "arts_data_path": "/work/um0878/users/jpetersen/",
  "lookuptable": "rfmip.xml",
- "solar_type": "None",
+ "solar_type": "Spectrum",
  "planck_emission": "0",
  "angular_grid": {
   "N_za_grid": 20,

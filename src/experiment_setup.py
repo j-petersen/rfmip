@@ -205,7 +205,7 @@ def rfmip_lvl_setup():
         input_folder='input/rfmip_lvl/',
         arts_data_path='/work/um0878/users/jpetersen/',
         lookuptable='rfmip.xml',
-        solar_type='None',
+        solar_type='Spectrum',
         planck_emission='0',
         which_spectral_grid='wavelength',
         spectral_grid={'min': 115.5, 'max': 9_999.5, 'n': 2**15},
