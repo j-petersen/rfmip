@@ -116,8 +116,8 @@ def run_arts_batch(exp_setup, verbosity=3):
         os.mkdir(f'{exp_setup.rfmip_path}output/{exp_setup.name}/')
     
     print('saving')
-    ws.WriteXML('binary', ws.dobatch_spectral_irradiance_field, f'{exp_setup.rfmip_path}output/{exp_setup.name}/spectral_irradiance.xml')
-    # ws.WriteXML('binary', ws.dobatch_irradiance_field, f'{exp_setup.rfmip_path}output/{exp_setup.name}/irradiance.xml')
+    # ws.WriteXML('binary', ws.dobatch_spectral_irradiance_field, f'{exp_setup.rfmip_path}output/{exp_setup.name}/spectral_irradiance.xml')
+    ws.WriteXML('binary', ws.dobatch_irradiance_field, f'{exp_setup.rfmip_path}output/{exp_setup.name}/irradiance.xml')
 
 
 @pyarts.workspace.arts_agenda(allow_callbacks=False)

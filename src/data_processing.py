@@ -38,7 +38,7 @@ def calc_flux(exp_setup) -> None:
     f_grid = f_grid_from_spectral_grid(exp_setup)
 
     irrad = np.trapz(spec_irrad, f_grid, axis=1)
-    save_data(irrad, exp_setup, 'fluxes')
+    save_data(irrad, exp_setup, 'irradiance')
 
 
 def f_grid_from_spectral_grid(exp_setup):
@@ -55,7 +55,7 @@ def f_grid_from_spectral_grid(exp_setup):
 
 
 def main() -> None:
-    exp_setup = read_exp_setup(exp_name='rfmip', path='/Users/jpetersen/rare/rfmip/experiment_setups/')
+    exp_setup = read_exp_setup(exp_name='rfmip_lvl', path='/Users/jpetersen/rare/rfmip/experiment_setups/')
     exp_setup.rfmip_path = '/Users/jpetersen/rare/rfmip/'
     exp_setup.arts_data_path = '/Users/jpetersen/rare/'
     calc_flux(exp_setup)

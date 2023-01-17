@@ -6,7 +6,8 @@ import matplotlib.pyplot as plt
 from read_netcdf import read_netcdf
 
 def main():
-    ty.plots.styles.use(['typhon'])
+    # ty.plots.styles.use(['typhon'])
+    ty.plots.styles.use(['typhon', 'typhon-dark'])
     solar_const = get_data()
     plot_solar_const(solar_const)
     plt.show()
@@ -44,15 +45,20 @@ def get_data():
 def plot_solar_const(solar_const):
 
     tsi = pyarts.xml.load('/Users/jpetersen/rare/rfmip/input/rfmip/total_solar_irradiance.xml')
+    sza = pyarts.xml.load('/Users/jpetersen/rare/rfmip/input/rfmip/solar_zenith_angle.xml')
+    
+    mask = tuple([sza<87])
+    sites = np.arange(100)[mask]
+    
     fig, ax = plt.subplots(figsize=(12, 9))
-
-    ax.scatter(np.arange(len(solar_const[0])), tsi-solar_const[0], marker='x', label="LBLRTM")
-    ax.scatter(np.arange(len(solar_const[0])), tsi-solar_const[1], marker='x', label="RRTMG")
-    ax.scatter(np.arange(len(solar_const[0])), tsi-solar_const[2], marker='x', label="ARTS")
+    ax.scatter(np.arange(len(solar_const[0]))[mask], (tsi-solar_const[1])[mask], marker='x', label="RRTMG")
+    ax.scatter(np.arange(len(solar_const[0]))[mask], (tsi-solar_const[2])[mask], marker='x', label="ARTS")
+    ax.scatter(np.arange(len(solar_const[0]))[mask], (tsi-solar_const[0])[mask], marker='x', label="LBLRTM")
 
     # ax.scatter(np.arange(len(solar_const[0])), solar_const[1]-solar_const[0], marker='x', label="RRTMG-LBLRTM")
-
-    ax.set_ylim(-0.01, 0.005)
+    ax.axhline(0, linewidth=0.5)
+    ax.set_ylim(-0.009, 0.004)
+    ax.ticklabel_format(useOffset=False, style='plain')
     ax.set_xlabel('site')
     ax.set_ylabel(r'difference to target tsi / W$\,$m$^{-2}$')
 
@@ -60,7 +66,8 @@ def plot_solar_const(solar_const):
     # add_solar_zenith_angle(ax2)
         
     ax.legend(frameon=False)
-    fig.savefig('/Users/jpetersen/rare/rfmip/plots/analysis/difference_tsi_distance_correction.png', dpi=200)
+    # fig.savefig('/Users/jpetersen/rare/rfmip/plots/analysis/difference_tsi.png', dpi=200)
+    fig.savefig('/Users/jpetersen/rare/rfmip/plots/analysis/difference_tsi_dark.png', dpi=200)
 
 
 def reduce_by_solarangle(toa):
